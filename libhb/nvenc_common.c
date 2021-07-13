@@ -22,7 +22,7 @@ int hb_nvenc_h264_available()
     #if HB_PROJECT_FEATURE_NVENC
         return hb_check_nvenc_available();
     #else
-        return 0;
+        return is_nvenc_available;
     #endif
 }
 
@@ -31,7 +31,7 @@ int hb_nvenc_h265_available()
     #if HB_PROJECT_FEATURE_NVENC
         return hb_check_nvenc_available();
     #else
-        return 0;
+        return is_nvenc_available;
     #endif
 }
 
@@ -71,4 +71,25 @@ int hb_check_nvenc_available()
     #else
         return 0;
     #endif
+}
+
+char * hb_map_nvenc_preset_name (char * preset){
+
+    if (strcmp(preset, "fastest") == 0) {
+      return "p1";
+    }  else if (strcmp(preset, "faster") == 0) {
+      return "p2";
+    } else if (strcmp(preset, "fast") == 0) {
+       return "p3";
+    } else if (strcmp(preset, "medium") == 0) {
+      return "p4";
+    } else if (strcmp(preset, "slow") == 0) {
+      return "p5";
+    } else if (strcmp(preset, "slower") == 0) {
+       return "p6";
+    } else if (strcmp(preset, "slowest") == 0) {
+      return "p7";
+    }
+
+    return "p4"; // Default to Medium
 }

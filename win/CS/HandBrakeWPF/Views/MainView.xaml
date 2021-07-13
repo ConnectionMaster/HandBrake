@@ -5,7 +5,7 @@
              xmlns:Converters="clr-namespace:HandBrakeWPF.Converters"
              xmlns:Properties="clr-namespace:HandBrakeWPF.Properties"
              xmlns:cal="http://www.caliburnproject.org"
-             xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:commands="clr-namespace:HandBrakeWPF.Commands"
              xmlns:loc="clr-namespace:HandBrakeWPF.Services.Presets.Model"
              xmlns:behaviours="clr-namespace:HandBrakeWPF.Behaviours"
@@ -135,8 +135,8 @@
                             <Image Width="16" Height="16"  Source="Images/information.png" />
                         </MenuItem.Icon>
                     </MenuItem>
-                    <Separator Visibility="{Binding IsUWP, Converter={StaticResource boolToVisConverter}, ConverterParameter=true}" />
-                    <MenuItem Header="{x:Static Properties:Resources.MainView_CheckForUpdates}" cal:Message.Attach="[Event Click] = [Action CheckForUpdates]" Visibility="{Binding IsUWP, Converter={StaticResource boolToVisConverter}, ConverterParameter=true}" />
+                    <Separator />
+                    <MenuItem Header="{x:Static Properties:Resources.MainView_CheckForUpdates}" cal:Message.Attach="[Event Click] = [Action CheckForUpdates]" />
                     <Separator />
                     <MenuItem Header="{x:Static Properties:Resources.MainView_About}" cal:Message.Attach="[Event Click] = [Action OpenAboutApplication]" />
                 </MenuItem>
@@ -289,12 +289,12 @@
                     </StackPanel>
                 </Button>
 
-                <Button Name="Preview" AutomationProperties.Name="Preview Picture Preview Window" cal:Message.Attach="[Event Click] = [Action OpenPreviewWindow]" >
+                <Button Name="Preview" AutomationProperties.Name="{x:Static Properties:Resources.MainView_ShowPreview}" cal:Message.Attach="[Event Click] = [Action OpenPreviewWindow]" >
                     <StackPanel Orientation="Horizontal">
                         <Image Width="32"
                                Height="32"
                                SnapsToDevicePixels="True"
-                               Source="{Binding Converter={StaticResource themeConverter}, ConverterParameter='Queue.png'}"/>
+                               Source="{Binding Converter={StaticResource themeConverter}, ConverterParameter='Preview.png'}"/>
                         <Label Margin="8,0,0,0"
                                VerticalAlignment="Center"
                                Content="{x:Static Properties:Resources.MainView_ShowPreview}"/>

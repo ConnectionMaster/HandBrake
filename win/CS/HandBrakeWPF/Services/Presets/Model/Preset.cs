@@ -16,7 +16,7 @@ namespace HandBrakeWPF.Services.Presets.Model
     using HandBrakeWPF.Properties;
     using HandBrakeWPF.Services.Presets.Interfaces;
 
-    using EncodeTask = HandBrakeWPF.Services.Encode.Model.EncodeTask;
+    using EncodeTask = Encode.Model.EncodeTask;
 
     public class Preset : PropertyChangedBase, IPresetObject
     {
@@ -49,7 +49,7 @@ namespace HandBrakeWPF.Services.Presets.Model
         {
             get
             {
-                string globalCateogry = this.IsBuildIn ? Resources.Preset_Official : Resources.Preset_Custom;
+                string globalCategory = this.IsBuildIn ? Resources.Preset_Official : Resources.Preset_Custom;
                 return string.Format("{0}", this.Name);
             }
         }

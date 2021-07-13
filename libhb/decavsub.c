@@ -14,6 +14,7 @@
 struct hb_avsub_context_s
 {
     AVCodecContext * context;
+    AVPacket       * pkt;
     hb_job_t       * job;
     hb_subtitle_t  * subtitle;
     // For subs, when doing passthru, we don't know if we need a
@@ -55,7 +56,6 @@ hb_avsub_context_t * decavsubInit( hb_work_object_t * w, hb_job_t * job )
     AVCodecContext * context = avcodec_alloc_context3(codec);
     context->codec = codec;
 
-
     hb_buffer_list_clear(&ctx->list);
     hb_buffer_list_clear(&ctx->list_pass);
     ctx->context               = context;
@@ -67,6 +67,7 @@ hb_avsub_context_t * decavsubInit( hb_work_object_t * w, hb_job_t * job )
     av_dict_set( &av_opts, "sub_text_format", "ass", 0 );
     if (ctx->subtitle->source == CC608SUB)
     {
+        av_dict_set( &av_opts, "data_field", "first", 0 );
         av_dict_set( &av_opts, "real_time", "1", 0 );
     }
     if (ctx->subtitle->source == VOBSUB && ctx->subtitle->palette_set)
@@ -101,6 +102,13 @@ hb_avsub_context_t * decavsubInit( hb_work_object_t * w, hb_job_t * job )
         return NULL;
     }
     av_dict_free( &av_opts );
+
+    ctx->pkt = av_packet_alloc();
+    if (ctx->pkt == NULL)
+    {
+        hb_log("decsubInit: av_packet_alloc failed");
+        return NULL;
+    }
 
     if (ctx->subtitle->format == TEXTSUB)
     {
@@ -275,8 +283,9 @@ int decavsubWork( hb_avsub_context_t * ctx,
                   hb_buffer_t ** buf_out )
 {
     hb_buffer_t * in = *buf_in;
+    hb_buffer_settings_t in_s = in->s;
 
-    if (in->s.flags & HB_BUF_FLAG_EOF)
+    if (in_s.flags & HB_BUF_FLAG_EOF)
     {
         /* EOF on input stream - send it downstream & say that we're done */
         *buf_in = NULL;
@@ -303,34 +312,32 @@ int decavsubWork( hb_avsub_context_t * ctx,
     memset( &subtitle, 0, sizeof(subtitle) );
 
     int64_t duration = AV_NOPTS_VALUE;
-    AVPacket avp;
 
-    av_init_packet( &avp );
-    avp.data = in->data;
-    avp.size = in->size;
-    avp.pts  = in->s.start;
-    if (in->s.duration > 0)
+    ctx->pkt->data = in->data;
+    ctx->pkt->size = in->size;
+    ctx->pkt->pts  = in_s.start;
+    if (in_s.duration > 0 || ctx->subtitle->source != PGSSUB)
     {
-        duration = in->s.duration;
+        duration = in_s.duration;
     }
 
     if (duration <= 0 &&
-        in->s.start != AV_NOPTS_VALUE &&
-        in->s.stop  != AV_NOPTS_VALUE &&
-        in->s.stop > in->s.start)
+        in_s.start != AV_NOPTS_VALUE &&
+        in_s.stop  != AV_NOPTS_VALUE &&
+        in_s.stop > in_s.start)
     {
-        duration = in->s.stop - in->s.start;
+        duration = in_s.stop - in_s.start;
     }
 
     int has_subtitle = 0;
 
-    while (avp.size > 0)
+    while (ctx->pkt->size > 0)
     {
         int usedBytes = avcodec_decode_subtitle2(ctx->context, &subtitle,
-                                                 &has_subtitle, &avp );
+                                                 &has_subtitle, ctx->pkt );
         if (usedBytes < 0)
         {
-            hb_error("unable to decode subtitle with %d bytes.", avp.size);
+            hb_error("unable to decode subtitle with %d bytes.", ctx->pkt->size);
             return HB_WORK_OK;
         }
 
@@ -339,17 +346,17 @@ int decavsubWork( hb_avsub_context_t * ctx,
             // We expect avcodec_decode_subtitle2 to return the number
             // of bytes consumed, or an error.  If for some unforseen reason
             // it returns 0, lets not get stuck in an infinite loop!
-            usedBytes = avp.size;
+            usedBytes = ctx->pkt->size;
         }
 
-        if (usedBytes <= avp.size)
+        if (usedBytes <= ctx->pkt->size)
         {
-            avp.data += usedBytes;
-            avp.size -= usedBytes;
+            ctx->pkt->data += usedBytes;
+            ctx->pkt->size -= usedBytes;
         }
         else
         {
-            avp.size = 0;
+            ctx->pkt->size = 0;
         }
 
         if (!has_subtitle)
@@ -430,9 +437,9 @@ int decavsubWork( hb_avsub_context_t * ctx,
         }
         else
         {
-            if (in->s.start >= 0)
+            if (in_s.start >= 0)
             {
-                pts = in->s.start;
+                pts = in_s.start;
             }
             else
             {
@@ -463,7 +470,7 @@ int decavsubWork( hb_avsub_context_t * ctx,
             // overshot the next subtitle pts.
             //
             // assign a 1 second duration
-            hb_log("decavsub: track %d, non-monotically increasing PTS, last %"PRId64" current %"PRId64"",
+            hb_log("decavsub: track %d, non-monotonically increasing PTS, last %"PRId64" current %"PRId64"",
                    ctx->subtitle->out_track,
                    ctx->last_pts, pts);
             pts = ctx->last_pts + 1 * 90000LL;
@@ -479,7 +486,7 @@ int decavsubWork( hb_avsub_context_t * ctx,
             // get translated to SSA
             //
             // When using the "real_time" option with CC608 subtitles,
-            // ffmpeg prepends an ASS rect that has only the preample
+            // ffmpeg prepends an ASS rect that has only the preamble
             // to every list of returned rects.  libass doesn't like this
             // and logs a warning for every one of these. So strip these
             // out by using only the last rect in the list.
@@ -645,8 +652,8 @@ int decavsubWork( hb_avsub_context_t * ctx,
                 duration      = 0;
             }
         }
-        out->s.id           = in->s.id;
-        out->s.scr_sequence = in->s.scr_sequence;
+        out->s.id           = in_s.id;
+        out->s.scr_sequence = in_s.scr_sequence;
         out->s.frametype    = HB_FRAME_SUBTITLE;
         out->s.start        = pts;
         if (duration != AV_NOPTS_VALUE)
@@ -678,6 +685,7 @@ void decavsubClose( hb_avsub_context_t * ctx )
     {
         return;
     }
+    av_packet_free(&ctx->pkt);
     hb_buffer_list_close(&ctx->list_pass);
     avcodec_flush_buffers(ctx->context);
     avcodec_free_context(&ctx->context);

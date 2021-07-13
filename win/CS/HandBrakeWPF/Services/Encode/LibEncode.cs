@@ -14,11 +14,11 @@ namespace HandBrakeWPF.Services.Encode
     using System.Globalization;
     using System.IO;
 
-    using HandBrake.Interop.Interop.EventArgs;
     using HandBrake.Interop.Interop.Interfaces;
+    using HandBrake.Interop.Interop.Interfaces.EventArgs;
+    using HandBrake.Interop.Interop.Interfaces.Model;
     using HandBrake.Interop.Interop.Json.Encode;
     using HandBrake.Interop.Interop.Json.State;
-    using HandBrake.Interop.Model;
 
     using HandBrakeWPF.Exceptions;
     using HandBrakeWPF.Properties;
@@ -63,9 +63,9 @@ namespace HandBrakeWPF.Services.Encode
 
         public event EncodeCompletedStatus EncodeCompleted;
 
-        public event EncodeProgessStatus EncodeStatusChanged;
+        public event EncodeProgressStatus EncodeStatusChanged;
 
-        public bool IsPasued { get; private set; }
+        public bool IsPaused { get; private set; }
 
         public bool IsEncoding { get; protected set; }
 
@@ -155,7 +155,7 @@ namespace HandBrakeWPF.Services.Encode
             {
                 this.instance.PauseEncode();
                 this.ServiceLogMessage("Encode Paused");
-                this.IsPasued = true;
+                this.IsPaused = true;
             }
         }
 
@@ -165,7 +165,7 @@ namespace HandBrakeWPF.Services.Encode
             {
                 this.instance.ResumeEncode();
                 this.ServiceLogMessage("Encode Resumed");
-                this.IsPasued = false;
+                this.IsPaused = false;
             }
         }
 
@@ -209,7 +209,7 @@ namespace HandBrakeWPF.Services.Encode
 
         private void InvokeEncodeStatusChanged(EventArgs.EncodeProgressEventArgs e)
         {
-            EncodeProgessStatus handler = this.EncodeStatusChanged;
+            EncodeProgressStatus handler = this.EncodeStatusChanged;
             handler?.Invoke(this, e);
         }
 

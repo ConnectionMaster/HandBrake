@@ -1,4 +1,4 @@
-__deps__ := BZIP2 ZLIB FDKAAC LIBDAV1D LIBVPX LAME LIBOPUS LIBSPEEX XZ
+__deps__ := BZIP2 ZLIB FDKAAC LIBDAV1D LIBVPX LAME LIBOPUS LIBSPEEX XZ ZIMG
 ifeq (1,$(FEATURE.qsv))
 __deps__ += LIBMFX
 endif
@@ -12,9 +12,9 @@ endif
 $(eval $(call import.MODULE.defs,FFMPEG,ffmpeg,$(__deps__)))
 $(eval $(call import.CONTRIB.defs,FFMPEG))
 
-FFMPEG.FETCH.url    = https://github.com/HandBrake/HandBrake-contribs/releases/download/contribs/ffmpeg-4.3.1.tar.bz2
-FFMPEG.FETCH.url   += https://ffmpeg.org/releases/ffmpeg-4.3.1.tar.bz2
-FFMPEG.FETCH.sha256 = f4a4ac63946b6eee3bbdde523e298fca6019d048d6e1db0d1439a62cea65f0d9
+FFMPEG.FETCH.url    = https://github.com/HandBrake/HandBrake-contribs/releases/download/contribs/ffmpeg-4.4.tar.bz2
+FFMPEG.FETCH.url   += https://ffmpeg.org/releases/ffmpeg-4.4.tar.bz2
+FFMPEG.FETCH.sha256 = 42093549751b582cf0f338a21a3664f52e0a9fbe0d238d3c992005e493607d0e
 
 FFMPEG.CONFIGURE.deps  =
 FFMPEG.CONFIGURE.host  =
@@ -34,6 +34,7 @@ FFMPEG.CONFIGURE.extra = \
     --disable-avdevice \
     --disable-muxers \
     --disable-network \
+    --enable-libzimg \
     --disable-hwaccels \
     --disable-vdpau \
     --disable-encoders \
@@ -58,7 +59,7 @@ FFMPEG.CONFIGURE.extra = \
     --enable-libdav1d \
     --enable-decoder=libdav1d \
     --cc="$(FFMPEG.GCC.gcc)" \
-    --extra-ldflags="$(call fn.ARGS,FFMPEG.GCC,*archs *sysroot *minver ?extra) -L$(call fn.ABSOLUTE,$(CONTRIB.build/)lib)"
+    --extra-ldflags="$(call fn.ARGS,FFMPEG.GCC,*archs *sysroot *minver ?extra) -L$(call fn.ABSOLUTE,$(CONTRIB.build/)lib) $(FFMPEG.GCC.args.extra-ldflags)"
 
 ifeq (size-aggressive,$(GCC.O))
 FFMPEG.CONFIGURE.extra += \
@@ -111,8 +112,14 @@ else ifeq (1-mingw,$(HOST.cross)-$(HOST.system))
         --target-os=mingw32 \
         --arch=$(HOST.machine) \
         --cross-prefix=$(HOST.cross.prefix) \
-        --pkg-config=$(PKGCONFIG.exe)
+        --pkg-config=$(PKGCONFIG.exe) \
+        --pkg-config-flags="--static"
     FFMPEG.GCC.args.extra += -fno-common
+    FFMPEG.GCC.args.extra-ldflags = -static-libgcc -static-libstdc++ -static
+else ifeq (darwin,$(HOST.system))
+    FFMPEG.GCC.args.extra-ldflags = -lc++
+else
+    FFMPEG.CONFIGURE.extra += --extra-libs="-lm -lstdc++"
 endif
 
 ifneq (none,$(FFMPEG.GCC.g))
@@ -144,6 +151,12 @@ FFMPEG.CONFIGURE.extra += \
      --enable-ffnvcodec \
      --enable-encoder=h264_nvenc \
      --enable-encoder=hevc_nvenc
+endif
+
+ifeq (1,$(FEATURE.mf))
+FFMPEG.CONFIGURE.extra += \
+      --enable-encoder=h264_mf \
+      --enable-encoder=hevc_mf
 endif
 
 ## enable compile verbosity

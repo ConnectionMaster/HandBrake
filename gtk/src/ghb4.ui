@@ -1799,7 +1799,7 @@ libx264 authors:
                     <property name="can_focus">False</property>
                     <child>
                       <object class="GtkCheckMenuItem" id="hbfd">
-                        <property name="label" translatable="yes">HandBrake For _Dumbies</property>
+                        <property name="label" translatable="yes">HandBrake For _Dummies</property>
                         <property name="visible">False</property>
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
@@ -3688,7 +3688,7 @@ SpatialLuma:SpatialChroma:TemporalLuma:TemporalChroma</property>
                             <property name="halign">start</property>
                             <property name="valign">start</property>
                             <child>
-                              <object class="GtkLabel" id="PictureSharpenFilterel">
+                              <object class="GtkLabel" id="PictureSharpenFilterLabel">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="halign">start</property>
@@ -5902,7 +5902,7 @@ Only one subtitle track can be burned! Since conflicts can occur, the first chos
     <property name="step_increment">5</property>
     <property name="page_increment">10</property>
   </object>
-  <object class="GtkDialog" id="titla_add_multiple_dialog">
+  <object class="GtkDialog" id="title_add_multiple_dialog">
     <property name="transient_for">hb_window</property>
     <property name="can_focus">False</property>
     <property name="type_hint">dialog</property>
@@ -6268,7 +6268,7 @@ Only one subtitle track can be burned! Since conflicts can occur, the first chos
                     </child>
                     <child>
                       <object class="GtkCheckButton" id="RemoveFinishedJobs">
-                        <property name="label" translatable="yes">Clear completed queue items after and encode completes</property>
+                        <property name="label" translatable="yes">Clear completed queue items after an encode completes</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>

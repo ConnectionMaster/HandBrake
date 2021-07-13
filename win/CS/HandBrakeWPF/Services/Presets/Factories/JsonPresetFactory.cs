@@ -16,15 +16,17 @@ namespace HandBrakeWPF.Services.Presets.Factories
 
     using HandBrake.Interop.Interop;
     using HandBrake.Interop.Interop.HbLib;
+    using HandBrake.Interop.Interop.Interfaces.Model;
+    using HandBrake.Interop.Interop.Interfaces.Model.Filters;
+    using HandBrake.Interop.Interop.Interfaces.Model.Picture;
+    using HandBrake.Interop.Interop.Interfaces.Model.Presets;
     using HandBrake.Interop.Interop.Json.Presets;
-    using HandBrake.Interop.Interop.Model;
-    using HandBrake.Interop.Interop.Model.Encoding;
-    using HandBrake.Interop.Model;
     using HandBrake.Interop.Utilities;
 
     using HandBrakeWPF.Model.Audio;
     using HandBrakeWPF.Model.Filters;
     using HandBrakeWPF.Model.Subtitles;
+    using HandBrakeWPF.Model.Video;
     using HandBrakeWPF.Services.Encode.Model.Models;
     using HandBrakeWPF.Services.Presets.Model;
     using HandBrakeWPF.Utilities;
@@ -36,6 +38,8 @@ namespace HandBrakeWPF.Services.Presets.Factories
     using EncodeTask = Encode.Model.EncodeTask;
     using FramerateMode = Encode.Model.Models.FramerateMode;
     using OutputFormat = Encode.Model.Models.OutputFormat;
+    using VideoEncoder = HandBrakeWPF.Model.Video.VideoEncoder;
+    using VideoEncodeRateType = HandBrakeWPF.Model.Video.VideoEncodeRateType;
     using VideoLevel = Encode.Model.Models.Video.VideoLevel;
     using VideoPreset = Encode.Model.Models.Video.VideoPreset;
     using VideoProfile = Encode.Model.Models.Video.VideoProfile;
@@ -59,25 +63,28 @@ namespace HandBrakeWPF.Services.Presets.Factories
             preset.Task.IPod5GSupport = importedPreset.Mp4iPodCompatible;
             preset.Task.OutputFormat = GetFileFormat(importedPreset.FileFormat.Replace("file", string.Empty).Trim());
             preset.Task.AlignAVStart = importedPreset.AlignAVStart;
+            preset.Task.MetaData.PassthruMetadataEnabled = importedPreset.MetadataPassthrough;
 
             /* Picture Settings */
             preset.Task.MaxWidth = importedPreset.PictureWidth.HasValue && importedPreset.PictureWidth.Value > 0 ? importedPreset.PictureWidth.Value : (int?)null;
             preset.Task.MaxHeight = importedPreset.PictureHeight.HasValue && importedPreset.PictureHeight.Value > 0 ? importedPreset.PictureHeight.Value : (int?)null;
             preset.Task.Cropping = new Cropping(importedPreset.PictureTopCrop, importedPreset.PictureBottomCrop, importedPreset.PictureLeftCrop, importedPreset.PictureRightCrop);
             preset.Task.HasCropping = !importedPreset.PictureAutoCrop;
-            preset.Task.Modulus = importedPreset.PictureModulus;
             preset.Task.KeepDisplayAspect = importedPreset.PictureKeepRatio;
+            preset.Task.AllowUpscaling = importedPreset.PictureAllowUpscaling;
+            preset.Task.OptimalSize = importedPreset.PictureUseMaximumSize;
 
+            preset.Task.Padding = new PaddingFilter();
+            preset.Task.Padding.Set(importedPreset.PicturePadTop, importedPreset.PicturePadBottom, importedPreset.PicturePadLeft, importedPreset.PicturePadRight, importedPreset.PicturePadColor, importedPreset.PicturePadMode);
+            
             switch (importedPreset.PicturePAR)
             {
                 case "custom":
                     preset.Task.Anamorphic = Anamorphic.Custom;
                     preset.Task.DisplayWidth = importedPreset.PictureDARWidth;
                     break;
-                case "loose":
-                    preset.Task.Anamorphic = Anamorphic.Loose;
-                    break;
                 case "auto":
+                case "loose":
                     preset.Task.Anamorphic = Anamorphic.Automatic;
                     break;
                 default:
@@ -87,6 +94,27 @@ namespace HandBrakeWPF.Services.Presets.Factories
 
             /* Filter Settings */
             preset.Task.Grayscale = importedPreset.VideoGrayScale;
+
+            if (!string.IsNullOrEmpty(importedPreset.PictureColorspacePreset))
+            {
+                preset.Task.Colourspace = new FilterPreset(HandBrakeFilterHelpers.GetFilterPresets((int)hb_filter_ids.HB_FILTER_COLORSPACE).FirstOrDefault(s => s.ShortName == importedPreset.PictureColorspacePreset));
+                preset.Task.CustomColourspace = importedPreset.PictureColorspaceCustom;
+            }
+            else
+            {
+                preset.Task.Colourspace = new FilterPreset("Off", "off");
+            }
+            
+            if (!string.IsNullOrEmpty(importedPreset.PictureChromaSmoothPreset))
+            {
+                preset.Task.ChromaSmooth = new FilterPreset(HandBrakeFilterHelpers.GetFilterPresets((int)hb_filter_ids.HB_FILTER_CHROMA_SMOOTH).FirstOrDefault(s => s.ShortName == importedPreset.PictureChromaSmoothPreset));
+                preset.Task.ChromaSmoothTune = new FilterTune(HandBrakeFilterHelpers.GetFilterTunes((int)hb_filter_ids.HB_FILTER_CHROMA_SMOOTH).FirstOrDefault(s => s.ShortName == importedPreset.PictureChromaSmoothTune));
+                preset.Task.CustomChromaSmooth = importedPreset.PictureChromaSmoothCustom;
+            }
+            else
+            {
+                preset.Task.ChromaSmooth = new FilterPreset("Off", "off");
+            }
 
             if (!string.IsNullOrEmpty(importedPreset.PictureDeblockPreset))
             {
@@ -334,7 +362,7 @@ namespace HandBrakeWPF.Services.Presets.Factories
 
             /* Audio Settings */
             preset.AudioTrackBehaviours = new AudioBehaviours();
-            preset.Task.AllowedPassthruOptions.AudioEncoderFallback = EnumHelper<AudioEncoder>.GetValue(importedPreset.AudioEncoderFallback);
+            preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioEncoderFallback = EnumHelper<AudioEncoder>.GetValue(importedPreset.AudioEncoderFallback);
             preset.AudioTrackBehaviours.SelectedBehaviour = importedPreset.AudioTrackSelectionBehavior == "all"
                                                                      ? AudioBehaviourModes.AllMatching
                                                                      : AudioBehaviourModes.FirstMatch;
@@ -343,38 +371,38 @@ namespace HandBrakeWPF.Services.Presets.Factories
 
             if (importedPreset.AudioCopyMask != null)
             {
-                preset.Task.AllowedPassthruOptions.SetFalse();
+                preset.AudioTrackBehaviours.AllowedPassthruOptions.SetFalse();
                 foreach (var item in importedPreset.AudioCopyMask)
                 {
                     AudioEncoder encoder = EnumHelper<AudioEncoder>.GetValue(item);
                     switch (encoder)
                     {
                         case AudioEncoder.AacPassthru:
-                            preset.Task.AllowedPassthruOptions.AudioAllowAACPass = true;
+                            preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioAllowAACPass = true;
                             break;
                         case AudioEncoder.Ac3Passthrough:
-                            preset.Task.AllowedPassthruOptions.AudioAllowAC3Pass = true;
+                            preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioAllowAC3Pass = true;
                             break;
                         case AudioEncoder.EAc3Passthrough:
-                            preset.Task.AllowedPassthruOptions.AudioAllowEAC3Pass = true;
+                            preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioAllowEAC3Pass = true;
                             break;
                         case AudioEncoder.DtsHDPassthrough:
-                            preset.Task.AllowedPassthruOptions.AudioAllowDTSHDPass = true;
+                            preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioAllowDTSHDPass = true;
                             break;
                         case AudioEncoder.DtsPassthrough:
-                            preset.Task.AllowedPassthruOptions.AudioAllowDTSPass = true;
+                            preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioAllowDTSPass = true;
                             break;
                         case AudioEncoder.FlacPassthru:
-                            preset.Task.AllowedPassthruOptions.AudioAllowFlacPass = true;
+                            preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioAllowFlacPass = true;
                             break;
                         case AudioEncoder.Mp2Passthru:
-                            preset.Task.AllowedPassthruOptions.AudioAllowMP2Pass = true;
+                            preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioAllowMP2Pass = true;
                             break;
                         case AudioEncoder.Mp3Passthru:
-                            preset.Task.AllowedPassthruOptions.AudioAllowMP3Pass = true;
+                            preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioAllowMP3Pass = true;
                             break;
                         case AudioEncoder.TrueHDPassthrough:
-                            preset.Task.AllowedPassthruOptions.AudioAllowTrueHDPass = true;
+                            preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioAllowTrueHDPass = true;
                             break;
                     }
                 }
@@ -385,7 +413,7 @@ namespace HandBrakeWPF.Services.Presets.Factories
                 IList<string> names = LanguageUtilities.GetLanguageNames(importedPreset.AudioLanguageList);
                 foreach (var name in names)
                 {
-                    preset.AudioTrackBehaviours.SelectedLangauges.Add(name);
+                    preset.AudioTrackBehaviours.SelectedLanguages.Add(name);
                 }
             }
 
@@ -444,7 +472,7 @@ namespace HandBrakeWPF.Services.Presets.Factories
                 IList<string> names = LanguageUtilities.GetLanguageNames(importedPreset.SubtitleLanguageList);
                 foreach (var name in names)
                 {
-                    preset.SubtitleTrackBehaviours.SelectedLangauges.Add(name);
+                    preset.SubtitleTrackBehaviours.SelectedLanguages.Add(name);
                 }
             }
 
@@ -534,13 +562,12 @@ namespace HandBrakeWPF.Services.Presets.Factories
             preset.PresetDescription = export.Description;
             preset.PresetName = export.Name;
             preset.Type = export.IsBuildIn ? 0 : 1;
-            preset.UsesPictureSettings = 1; // Set to Custom, Always for the new UI.
             preset.Default = export.IsDefault;
 
             // Audio
-            preset.AudioCopyMask = export.Task.AllowedPassthruOptions.AllowedPassthruOptions.Select(EnumHelper<AudioEncoder>.GetShortName).ToList();
-            preset.AudioEncoderFallback = EnumHelper<AudioEncoder>.GetShortName(export.Task.AllowedPassthruOptions.AudioEncoderFallback);
-            preset.AudioLanguageList = LanguageUtilities.GetLanguageCodes(export.AudioTrackBehaviours.SelectedLangauges);
+            preset.AudioCopyMask = export.AudioTrackBehaviours.AllowedPassthruOptions.AllowedPassthruOptions.Select(EnumHelper<AudioEncoder>.GetShortName).ToList();
+            preset.AudioEncoderFallback = EnumHelper<AudioEncoder>.GetShortName(export.AudioTrackBehaviours.AllowedPassthruOptions.AudioEncoderFallback);
+            preset.AudioLanguageList = LanguageUtilities.GetLanguageCodes(export.AudioTrackBehaviours.SelectedLanguages);
             preset.AudioTrackSelectionBehavior = EnumHelper<AudioBehaviourModes>.GetShortName(export.AudioTrackBehaviours.SelectedBehaviour);
             preset.AudioSecondaryEncoderMode = export.AudioTrackBehaviours.SelectedTrackDefaultBehaviour == AudioTrackDefaultsMode.FirstTrack; // 1 = First Track, 0 = All
             preset.AudioList = new List<AudioList>();
@@ -570,7 +597,7 @@ namespace HandBrakeWPF.Services.Presets.Factories
             preset.SubtitleBurnBDSub = false; // TODO not supported yet.
             preset.SubtitleBurnDVDSub = false; // TODO not supported yet.
             preset.SubtitleBurnBehavior = EnumHelper<SubtitleBurnInBehaviourModes>.GetShortName(export.SubtitleTrackBehaviours.SelectedBurnInBehaviour);
-            preset.SubtitleLanguageList = LanguageUtilities.GetLanguageCodes(export.SubtitleTrackBehaviours.SelectedLangauges);
+            preset.SubtitleLanguageList = LanguageUtilities.GetLanguageCodes(export.SubtitleTrackBehaviours.SelectedLanguages);
             preset.SubtitleTrackSelectionBehavior = EnumHelper<SubtitleBehaviourModes>.GetShortName(export.SubtitleTrackBehaviours.SelectedBehaviour);
 
             // Chapters
@@ -581,20 +608,29 @@ namespace HandBrakeWPF.Services.Presets.Factories
             preset.Mp4HttpOptimize = export.Task.OptimizeMP4;
             preset.Mp4iPodCompatible = export.Task.IPod5GSupport;
             preset.AlignAVStart = export.Task.AlignAVStart;
+            preset.MetadataPassthrough = export.Task.MetaData?.PassthruMetadataEnabled ?? false;
 
             // Picture Settings
             preset.PictureForceHeight = 0; // TODO
             preset.PictureForceWidth = 0; // TODO
-            preset.PictureHeight = preset.UsesPictureSettings >= 1 ? export.Task.MaxHeight : 0;
+            preset.PictureHeight = export.Task.MaxHeight;
             preset.PictureItuPAR = false; // TODO Not supported Yet
             preset.PictureKeepRatio = export.Task.KeepDisplayAspect;
             preset.PictureLeftCrop = export.Task.Cropping.Left;
             preset.PictureLooseCrop = false; // TODO Not Supported Yet
-            preset.PictureModulus = export.Task.Modulus ?? 16;
             preset.PicturePAR = EnumHelper<Anamorphic>.GetShortName(export.Task.Anamorphic);
             preset.PicturePARHeight = export.Task.PixelAspectY;
             preset.PicturePARWidth = export.Task.PixelAspectX;
             preset.PictureRightCrop = export.Task.Cropping.Right;
+
+            preset.PicturePadMode = export.Task.Padding.Mode;
+            preset.PicturePadTop = export.Task.Padding.Y;
+            preset.PicturePadBottom = export.Task.Padding.Bottom;
+            preset.PicturePadLeft = export.Task.Padding.X;
+            preset.PicturePadRight = export.Task.Padding.Right;
+            preset.PicturePadColor = export.Task.Padding.Color;
+            preset.PictureUseMaximumSize = export.Task.OptimalSize;
+            preset.PictureAllowUpscaling = export.Task.AllowUpscaling;
 
             if (export.Task.Rotation != 0 || export.Task.FlipVideo)
             {
@@ -602,13 +638,12 @@ namespace HandBrakeWPF.Services.Presets.Factories
             }
 
             preset.PictureTopCrop = export.Task.Cropping.Top;
-            preset.PictureWidth = preset.UsesPictureSettings >= 1 ? export.Task.MaxWidth : 0;
+            preset.PictureWidth = export.Task.MaxWidth;
             preset.PictureDARWidth = export.Task.DisplayWidth.HasValue ? (int)export.Task.DisplayWidth.Value : 0;
             preset.PictureAutoCrop = !export.Task.HasCropping;
             preset.PictureBottomCrop = export.Task.Cropping.Bottom;
 
             // Filters
-            preset.UsesPictureFilters = true;
             preset.PictureDeblockPreset = export.Task.DeblockPreset?.Key;
             preset.PictureDeblockTune = export.Task.DeblockTune?.Key;
             preset.PictureDeblockCustom = export.Task.CustomDeblock;
@@ -635,6 +670,13 @@ namespace HandBrakeWPF.Services.Presets.Factories
             preset.PictureSharpenTune = export.Task.SharpenTune != null ? export.Task.SharpenTune.Key : string.Empty;
             preset.PictureSharpenCustom = export.Task.SharpenCustom;
 
+            preset.PictureColorspacePreset = export.Task.Colourspace?.Key;
+            preset.PictureColorspaceCustom = export.Task.CustomColourspace;
+
+            preset.PictureChromaSmoothPreset = export.Task.ChromaSmooth?.Key;
+            preset.PictureChromaSmoothTune = export.Task.ChromaSmoothTune?.Key;
+            preset.PictureChromaSmoothCustom = export.Task.CustomChromaSmooth;
+            
             // Video
             preset.VideoEncoder = EnumHelper<VideoEncoder>.GetShortName(export.Task.VideoEncoder);
             preset.VideoFramerate = export.Task.Framerate.HasValue ? export.Task.Framerate.ToString() : null;
@@ -675,6 +717,9 @@ namespace HandBrakeWPF.Services.Presets.Factories
                 case "mkv":
                 case "av_mkv":
                     return OutputFormat.Mkv;
+                case "webm":
+                case "av_webm":
+                    return OutputFormat.WebM;
             }
         }
     }

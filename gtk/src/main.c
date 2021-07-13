@@ -941,7 +941,7 @@ ghb_idle_ui_init(signal_user_data_t *ud)
     }
 
     // Grey out widgets that are dependent on a disabled feature
-    ghb_check_all_depencencies(ud);
+    ghb_check_all_dependencies(ud);
 
     return FALSE;
 }
@@ -1166,8 +1166,8 @@ ghb_activate_cb(GApplication * app, signal_user_data_t * ud)
     gtk_file_filter_set_name(filter, "MPG");
     gtk_file_filter_add_pattern(filter, "*.mpg");
     gtk_file_filter_add_pattern(filter, "*.MPG");
-    gtk_file_filter_add_pattern(filter, "*.mepg");
-    gtk_file_filter_add_pattern(filter, "*.MEPG");
+    gtk_file_filter_add_pattern(filter, "*.mpeg");
+    gtk_file_filter_add_pattern(filter, "*.MPEG");
     gtk_file_chooser_add_filter(chooser, filter);
     filter = GTK_FILE_FILTER(GHB_OBJECT(ud->builder, "SourceFilterEVO"));
     gtk_file_filter_set_name(filter, "EVO");
@@ -1228,7 +1228,7 @@ ghb_activate_cb(GApplication * app, signal_user_data_t * ud)
     // Gtk has a really stupid bug.  If the file chooser is showing
     // hidden files AND there is no filter set, it will not select
     // the filename when gtk_file_chooser_set_filename is called.
-    // So add a completely unnessary filter to prevent this behavior.
+    // So add a completely unnecessary filter to prevent this behavior.
     filter = GTK_FILE_FILTER(GHB_OBJECT(ud->builder, "SourceFilterAll"));
     gtk_file_chooser_set_filter(chooser, filter);
 
@@ -1265,6 +1265,10 @@ ghb_activate_cb(GApplication * app, signal_user_data_t * ud)
                                   "detelecine", HB_FILTER_DETELECINE);
     ghb_set_custom_filter_tooltip(ud, "PictureCombDetectCustom",
                                   "interlace detection", HB_FILTER_COMB_DETECT);
+    ghb_set_custom_filter_tooltip(ud, "PictureColorspaceCustom",
+                                  "colorspace", HB_FILTER_COLORSPACE);
+    ghb_set_custom_filter_tooltip(ud, "PictureChromaSmoothCustom",
+                                  "chroma smooth", HB_FILTER_CHROMA_SMOOTH);
 
     gtk_application_add_window(GTK_APPLICATION(app), GTK_WINDOW(ghb_window));
     GtkWidget * window = GHB_WIDGET(ud->builder, "presets_window");

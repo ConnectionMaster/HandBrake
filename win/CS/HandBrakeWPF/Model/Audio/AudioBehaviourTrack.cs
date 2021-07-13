@@ -18,8 +18,8 @@ namespace HandBrakeWPF.Model.Audio
     using Caliburn.Micro;
 
     using HandBrake.Interop.Interop;
-    using HandBrake.Interop.Interop.Model;
-    using HandBrake.Interop.Interop.Model.Encoding;
+    using HandBrake.Interop.Interop.Interfaces.Model.Encoders;
+
     using Services.Encode.Model.Models;
     using Utilities;
 
@@ -583,7 +583,7 @@ namespace HandBrakeWPF.Model.Audio
         }
 
         /// <summary>
-        /// Restrict the available mixdowns to those that the enocder actually supports.
+        /// Restrict the available mixdowns to those that the encoder actually supports.
         /// </summary>
         private void SetupMixdowns()
         {

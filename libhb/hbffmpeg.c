@@ -118,21 +118,9 @@ hb_buffer_t * hb_avframe_to_video_buffer(AVFrame *frame, AVRational time_base)
     return buf;
 }
 
-static int handle_jpeg(enum AVPixelFormat *format)
-{
-    switch (*format)
-    {
-        case AV_PIX_FMT_YUVJ420P: *format = AV_PIX_FMT_YUV420P; return 1;
-        case AV_PIX_FMT_YUVJ422P: *format = AV_PIX_FMT_YUV422P; return 1;
-        case AV_PIX_FMT_YUVJ444P: *format = AV_PIX_FMT_YUV444P; return 1;
-        case AV_PIX_FMT_YUVJ440P: *format = AV_PIX_FMT_YUV440P; return 1;
-        default:                                                return 0;
-    }
-}
-
 struct SwsContext*
-hb_sws_get_context(int srcW, int srcH, enum AVPixelFormat srcFormat,
-                   int dstW, int dstH, enum AVPixelFormat dstFormat,
+hb_sws_get_context(int srcW, int srcH, enum AVPixelFormat srcFormat, int srcRange,
+                   int dstW, int dstH, enum AVPixelFormat dstFormat, int dstRange,
                    int flags, int colorspace)
 {
     struct SwsContext * ctx;
@@ -140,10 +128,6 @@ hb_sws_get_context(int srcW, int srcH, enum AVPixelFormat srcFormat,
     ctx = sws_alloc_context();
     if ( ctx )
     {
-        int srcRange, dstRange;
-
-        srcRange = handle_jpeg(&srcFormat);
-        dstRange = handle_jpeg(&dstFormat);
         flags |= SWS_FULL_CHR_H_INT | SWS_FULL_CHR_H_INP;
 
         av_opt_set_int(ctx, "srcw", srcW, 0);
@@ -421,6 +405,62 @@ int hb_colr_mat_ff_to_hb(int colr_mat)
         case AVCOL_SPC_RESERVED:
             return HB_COLR_MAT_UNDEF;
     }
+}
+
+static hb_rational_t hb_rational_ff_to_hb(AVRational rational)
+{
+    hb_rational_t hb_rational = {rational.num, rational.den};
+    return hb_rational;
+}
+
+static AVRational hb_rational_hb_to_ff(hb_rational_t rational)
+{
+    AVRational ff_rational = {rational.num, rational.den};
+    return ff_rational;
+}
+
+hb_mastering_display_metadata_t hb_mastering_ff_to_hb(AVMasteringDisplayMetadata mastering)
+{
+    hb_mastering_display_metadata_t hb_mastering;
+
+    for (int i = 0; i < 3; i++)
+    {
+        hb_mastering.display_primaries[i][0] = hb_rational_ff_to_hb(mastering.display_primaries[i][0]);
+        hb_mastering.display_primaries[i][1] = hb_rational_ff_to_hb(mastering.display_primaries[i][1]);
+    }
+
+    hb_mastering.white_point[0] = hb_rational_ff_to_hb(mastering.white_point[0]);
+    hb_mastering.white_point[1] = hb_rational_ff_to_hb(mastering.white_point[1]);
+
+    hb_mastering.min_luminance = hb_rational_ff_to_hb(mastering.min_luminance);
+    hb_mastering.max_luminance = hb_rational_ff_to_hb(mastering.max_luminance);
+
+    hb_mastering.has_primaries = mastering.has_primaries;
+    hb_mastering.has_luminance = mastering.has_luminance;
+
+    return hb_mastering;
+}
+
+AVMasteringDisplayMetadata hb_mastering_hb_to_ff(hb_mastering_display_metadata_t mastering)
+{
+    AVMasteringDisplayMetadata ff_mastering;
+
+    for (int i = 0; i < 3; i++)
+    {
+        ff_mastering.display_primaries[i][0] = hb_rational_hb_to_ff(mastering.display_primaries[i][0]);
+        ff_mastering.display_primaries[i][1] = hb_rational_hb_to_ff(mastering.display_primaries[i][1]);
+    }
+
+    ff_mastering.white_point[0] = hb_rational_hb_to_ff(mastering.white_point[0]);
+    ff_mastering.white_point[1] = hb_rational_hb_to_ff(mastering.white_point[1]);
+
+    ff_mastering.min_luminance = hb_rational_hb_to_ff(mastering.min_luminance);
+    ff_mastering.max_luminance = hb_rational_hb_to_ff(mastering.max_luminance);
+
+    ff_mastering.has_primaries = mastering.has_primaries;
+    ff_mastering.has_luminance = mastering.has_luminance;
+
+    return ff_mastering;
 }
 
 uint64_t hb_ff_mixdown_xlat(int hb_mixdown, int *downmix_mode)

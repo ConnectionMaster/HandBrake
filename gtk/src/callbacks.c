@@ -749,14 +749,14 @@ ghb_check_dependency(
 }
 
 void
-ghb_check_all_depencencies(signal_user_data_t *ud)
+ghb_check_all_dependencies(signal_user_data_t *ud)
 {
     GhbDictIter iter;
     const gchar *dep_name;
     GhbValue *value;
     GObject *dep_object;
 
-    g_debug("ghb_check_all_depencencies ()");
+    g_debug("ghb_check_all_dependencies ()");
     if (rev_map == NULL) return;
     iter = ghb_dict_iter_init(rev_map);
     while (ghb_dict_iter_next(rev_map, &iter, &dep_name, &value))
@@ -1669,7 +1669,7 @@ ghb_load_post_settings(signal_user_data_t * ud)
     ud->scale_busy = TRUE;
 
     ghb_set_widget_ranges(ud, ud->settings);
-    ghb_check_all_depencencies(ud);
+    ghb_check_all_dependencies(ud);
     ghb_show_container_options(ud);
     check_chapter_markers(ud);
 
@@ -2206,42 +2206,6 @@ get_aspect_string(gint aspect_n, gint aspect_d)
     return aspect;
 }
 
-static void
-update_aspect_info(signal_user_data_t *ud)
-{
-}
-
-static void
-update_crop_info(signal_user_data_t *ud)
-{
-    GtkWidget *widget;
-    gchar *text;
-    gint width, height, crop[4] = {0,};
-    gint title_id, titleindex;
-    const hb_title_t *title;
-
-    title_id = ghb_dict_get_int(ud->settings, "title");
-    title = ghb_lookup_title(title_id, &titleindex);
-    if (title != NULL)
-    {
-        crop[0] = ghb_dict_get_int(ud->settings, "PictureTopCrop");
-        crop[1] = ghb_dict_get_int(ud->settings, "PictureBottomCrop");
-        crop[2] = ghb_dict_get_int(ud->settings, "PictureLeftCrop");
-        crop[3] = ghb_dict_get_int(ud->settings, "PictureRightCrop");
-        width = title->geometry.width - crop[2] - crop[3];
-        height = title->geometry.height - crop[0] - crop[1];
-        text = g_strdup_printf ("%d x %d", width, height);
-        widget = GHB_WIDGET(ud->builder, "crop_dimensions2");
-        gtk_label_set_text(GTK_LABEL(widget), text);
-        g_free(text);
-    }
-}
-
-static void
-update_scale_info(signal_user_data_t *ud)
-{
-}
-
 void
 ghb_update_title_info(signal_user_data_t *ud)
 {
@@ -2282,21 +2246,26 @@ ghb_update_title_info(signal_user_data_t *ud)
     widget = GHB_WIDGET(ud->builder, "source_info_label");
     gtk_label_set_text(GTK_LABEL(widget), text);
     free(text);
-    free(aspect);
     free(rate);
 
-    ghb_update_display_aspect_label(ud);
+    text = g_strdup_printf("%d x %d", geo->width, geo->height);
+    ghb_ui_update(ud, "source_storage_size", ghb_string_value(text));
+    g_free(text);
 
-    update_crop_info(ud);
-    update_aspect_info(ud);
-    update_scale_info(ud);
+    text = g_strdup_printf("%d x %d", geo->width * geo->par.num / geo->par.den,
+                           geo->height);
+    ghb_ui_update(ud, "source_display_size", ghb_string_value(text));
+    g_free(text);
+
+    ghb_ui_update(ud, "source_aspect_ratio", ghb_string_value(aspect));
+    free(aspect);
 }
 
 static void update_meta(GhbValue *settings, const char *name, const char *val)
 {
     GhbValue *metadata = ghb_get_job_metadata_settings(settings);
 
-    if (val == NULL)
+    if (val == NULL || val[0] == 0)
         ghb_dict_remove(metadata, name);
     else
         ghb_dict_set_string(metadata, name, val);
@@ -2500,7 +2469,7 @@ ghb_update_summary_info(signal_user_data_t *ud)
 
     // Filters
     gboolean     detel, comb_detect, deint, decomb, deblock, nlmeans, denoise;
-    gboolean     unsharp, lapsharp, rot, gray;
+    gboolean     unsharp, lapsharp, hflip, rot, gray, colorspace, chroma_smooth;
     const char * sval;
 
     sval        = ghb_dict_get_string(ud->settings, "PictureDetelecine");
@@ -2518,9 +2487,14 @@ ghb_update_summary_info(signal_user_data_t *ud)
     sval        = ghb_dict_get_string(ud->settings, "PictureSharpenFilter");
     unsharp     = sval != NULL && !strcasecmp(sval, "unsharp");
     lapsharp    = sval != NULL && !strcasecmp(sval, "lapsharp");
-    sval        = ghb_dict_get_string(ud->settings, "PictureRotate");
-    rot         = sval != NULL && !!strcasecmp(sval, "disable=1");
+    hflip       = ghb_dict_get_bool(ud->settings, "hflip");
+    sval        = ghb_dict_get_string(ud->settings, "rotate");
+    rot         = sval != NULL && !!strcasecmp(sval, "0");
     gray        = ghb_dict_get_bool(ud->settings, "VideoGrayScale");
+    sval        = ghb_dict_get_string(ud->settings, "PictureColorspacePreset");
+    colorspace  = sval != NULL && !!strcasecmp(sval, "off");
+    sval        = ghb_dict_get_string(ud->settings, "PictureChromaSmoothPreset");
+    chroma_smooth  = sval != NULL && !!strcasecmp(sval, "off");
 
     str = g_string_new("");
     sval = "";
@@ -2566,9 +2540,21 @@ ghb_update_summary_info(signal_user_data_t *ud)
         g_string_append_printf(str, "%s%s", sval, filter->name);
         sval = ", ";
     }
+    if (chroma_smooth)
+    {
+        hb_filter_object_t * filter = hb_filter_get(HB_FILTER_CHROMA_SMOOTH);
+        g_string_append_printf(str, "%s%s", sval, filter->name);
+        sval = ", ";
+    }
     if (unsharp)
     {
         hb_filter_object_t * filter = hb_filter_get(HB_FILTER_UNSHARP);
+        g_string_append_printf(str, "%s%s", sval, filter->name);
+        sval = ", ";
+    }
+    if (rot || hflip)
+    {
+        hb_filter_object_t * filter = hb_filter_get(HB_FILTER_ROTATE);
         g_string_append_printf(str, "%s%s", sval, filter->name);
         sval = ", ";
     }
@@ -2578,15 +2564,15 @@ ghb_update_summary_info(signal_user_data_t *ud)
         g_string_append_printf(str, "%s%s", sval, filter->name);
         sval = ", ";
     }
-    if (rot)
-    {
-        hb_filter_object_t * filter = hb_filter_get(HB_FILTER_ROTATE);
-        g_string_append_printf(str, "%s%s", sval, filter->name);
-        sval = ", ";
-    }
     if (gray)
     {
         hb_filter_object_t * filter = hb_filter_get(HB_FILTER_GRAYSCALE);
+        g_string_append_printf(str, "%s%s", sval, filter->name);
+        sval = ", ";
+    }
+    if (colorspace)
+    {
+        hb_filter_object_t * filter = hb_filter_get(HB_FILTER_COLORSPACE);
         g_string_append_printf(str, "%s%s", sval, filter->name);
         sval = ", ";
     }
@@ -2602,8 +2588,8 @@ ghb_update_summary_info(signal_user_data_t *ud)
 
     width          = ghb_dict_get_int(ud->settings, "scale_width");
     height         = ghb_dict_get_int(ud->settings, "scale_height");
-    display_width  = ghb_dict_get_int(ud->settings, "PictureDisplayWidth");
-    display_height = ghb_dict_get_int(ud->settings, "PictureDisplayHeight");
+    display_width  = ghb_dict_get_int(ud->settings, "PictureDARWidth");
+    display_height = ghb_dict_get_int(ud->settings, "DisplayHeight");
     par_width      = ghb_dict_get_int(ud->settings, "PicturePARWidth");
     par_height     = ghb_dict_get_int(ud->settings, "PicturePARHeight");
 
@@ -2611,7 +2597,7 @@ ghb_update_summary_info(signal_user_data_t *ud)
     display_aspect = ghb_get_display_aspect_string(display_width,
                                                    display_height);
 
-    display_width  = ghb_dict_get_int(ud->settings, "PictureDisplayWidth");
+    display_width  = ghb_dict_get_int(ud->settings, "PictureDARWidth");
     text = g_strdup_printf("%dx%d storage, %dx%d display\n"
                            "%d:%d Pixel Aspect Ratio\n"
                             "%s Display Aspect Ratio",
@@ -2622,6 +2608,7 @@ ghb_update_summary_info(signal_user_data_t *ud)
 
     g_free(text);
     g_free(display_aspect);
+
     ghb_value_free(&titleDict);
 }
 
@@ -2661,15 +2648,25 @@ ghb_set_title_settings(signal_user_data_t *ud, GhbValue *settings)
         ghb_dict_set_string(settings, "volume", label);
         g_free(label);
 
+
+        int                angle, hflip;
+        hb_geometry_crop_t srcGeo;
+
+        srcGeo.geometry = title->geometry;
+        memcpy(srcGeo.crop, &title->crop, 4 * sizeof(int));
+        angle = ghb_dict_get_int(settings, "rotate");
+        hflip = ghb_dict_get_int(settings, "hflip");
+        hb_rotate_geometry(&srcGeo, &srcGeo, angle, hflip);
+        ghb_apply_crop(settings, &srcGeo);
+
         int crop[4];
 
-        ghb_apply_crop(settings, title);
         crop[0] = ghb_dict_get_int(settings, "PictureTopCrop");
         crop[1] = ghb_dict_get_int(settings, "PictureBottomCrop");
         crop[2] = ghb_dict_get_int(settings, "PictureLeftCrop");
         crop[3] = ghb_dict_get_int(settings, "PictureRightCrop");
         ghb_dict_set_int(settings, "scale_width",
-                 title->geometry.width - crop[2] - crop[3]);
+                 srcGeo.geometry.width - crop[2] - crop[3]);
 
         // If anamorphic or keep_aspect, the height will
         // be automatically calculated
@@ -2683,50 +2680,59 @@ ghb_set_title_settings(signal_user_data_t *ud, GhbValue *settings)
             pic_par == HB_ANAMORPHIC_CUSTOM)
         {
             ghb_dict_set_int(settings, "scale_height",
-                title->geometry.height - crop[0] - crop[1]);
+                srcGeo.geometry.height - crop[0] - crop[1]);
         }
 
-        ghb_set_scale_settings(settings, GHB_PIC_KEEP_PAR|GHB_PIC_USE_MAX);
+        ghb_set_scale_settings(ud, settings, GHB_PIC_USE_MAX);
         ghb_dict_set_int(settings, "angle_count", title->angle_count);
 
-        ghb_dict_set_string(settings, "MetaName", title->name);
-        update_meta(settings, "Name", title->name);
-        if (title->metadata)
+
+        // Clear UI settings for new title
+        ghb_dict_set_string(settings, "MetaName", "");
+        ghb_dict_set_string(settings, "MetaArtist", "");
+        ghb_dict_set_string(settings, "MetaReleaseDate", "");
+        ghb_dict_set_string(settings, "MetaComment", "");
+        ghb_dict_set_string(settings, "MetaAlbumArtist", "");
+        ghb_dict_set_string(settings, "MetaGenre", "");
+        ghb_dict_set_string(settings, "MetaDescription", "");
+        ghb_dict_set_string(settings, "MetaLongDescription", "");
+
+        if (ghb_dict_get_bool(settings, "MetadataPassthrough"))
         {
-            if (title->metadata->name)
+            ghb_dict_set_string(settings, "MetaName", title->name);
+            update_meta(settings, "Name", title->name);
+            if (title->metadata && title->metadata->dict)
             {
-                ghb_dict_set_string(settings, "MetaName",
-                    title->metadata->name);
-                update_meta(settings, "Name", title->metadata->name);
+
+                hb_dict_iter_t iter = hb_dict_iter_init(title->metadata->dict);
+
+                while (iter != HB_DICT_ITER_DONE)
+                {
+                    const char * key;
+                    hb_value_t * val;
+
+                    hb_dict_iter_next_ex(title->metadata->dict, &iter, &key, &val);
+                    if (key != NULL && val != NULL)
+                    {
+                        const char * str = hb_value_get_string(val);
+
+                        update_meta(settings, key, str);
+
+                        if (!strcmp(key, "Album"))
+                        {
+                            key = "Name";
+                        }
+                        char * ui_key = g_strdup_printf("Meta%s", key);
+                        ghb_dict_set_string(settings, ui_key, str);
+                        free(ui_key);
+                    }
+                }
             }
-            ghb_dict_set_string(settings, "MetaArtist",
-                    title->metadata->artist);
-            update_meta(settings, "Artist", title->metadata->artist);
-            ghb_dict_set_string(settings, "MetaReleaseDate",
-                    title->metadata->release_date);
-            update_meta(settings, "ReleaseDate", title->metadata->release_date);
-            ghb_dict_set_string(settings, "MetaComment",
-                    title->metadata->comment);
-            update_meta(settings, "Comment", title->metadata->comment);
-            if (!title->metadata->name && title->metadata->album)
-            {
-                ghb_dict_set_string(settings, "MetaName",
-                    title->metadata->album);
-                update_meta(settings, "Name", title->metadata->album);
-            }
-            ghb_dict_set_string(settings, "MetaAlbumArtist",
-                    title->metadata->album_artist);
-            update_meta(settings, "AlbumArtist", title->metadata->album_artist);
-            ghb_dict_set_string(settings, "MetaGenre",
-                    title->metadata->genre);
-            update_meta(settings, "Genre", title->metadata->genre);
-            ghb_dict_set_string(settings, "MetaDescription",
-                    title->metadata->description);
-            update_meta(settings, "Description", title->metadata->description);
-            ghb_dict_set_string(settings, "MetaLongDescription",
-                    title->metadata->long_description);
-            update_meta(settings, "LongDescription",
-                title->metadata->long_description);
+        }
+        else
+        {
+            GhbValue * meta = ghb_get_job_metadata_settings(settings);
+            hb_dict_clear(meta);
         }
         ghb_sanitize_audio_track_settings(settings);
     }
@@ -2734,6 +2740,7 @@ ghb_set_title_settings(signal_user_data_t *ud, GhbValue *settings)
     {
         ghb_dict_set_string(settings, "source_label", _("No Title Found"));
         ghb_dict_set_string(settings, "volume", _("New Video"));
+        ghb_set_scale_settings(ud, settings, GHB_PIC_USE_MAX);
     }
 
     set_destination_settings(ud, settings);
@@ -2916,6 +2923,85 @@ setting_widget_changed_cb(GtkWidget *widget, signal_user_data_t *ud)
     ghb_update_summary_info(ud);
     ghb_clear_presets_selection(ud);
     ghb_live_reset(ud);
+}
+
+G_MODULE_EXPORT void
+meta_pass_changed_cb(GtkWidget *widget, signal_user_data_t *ud)
+{
+    setting_widget_changed_cb(widget, ud);
+
+    int title_id, titleindex;
+    const hb_title_t * title;
+
+    title_id = ghb_dict_get_int(ud->settings, "title");
+    title = ghb_lookup_title(title_id, &titleindex);
+
+    if (title != NULL &&
+        ghb_dict_get_bool(ud->settings, "MetadataPassthrough"))
+    {
+        // Reload metadata from title
+        ghb_dict_set_string(ud->settings, "MetaName", title->name);
+        update_meta(ud->settings, "Name", title->name);
+        if (title->metadata && title->metadata->dict)
+        {
+
+            hb_dict_iter_t iter = hb_dict_iter_init(title->metadata->dict);
+
+            while (iter != HB_DICT_ITER_DONE)
+            {
+                const char * key;
+                hb_value_t * val;
+
+                hb_dict_iter_next_ex(title->metadata->dict, &iter, &key, &val);
+                if (key != NULL && val != NULL)
+                {
+                    const char * str = hb_value_get_string(val);
+
+                    update_meta(ud->settings, key, str);
+
+                    if (!strcmp(key, "Album"))
+                    {
+                        key = "Name";
+                    }
+                    char * ui_key = g_strdup_printf("Meta%s", key);
+                    ghb_dict_set_string(ud->settings, ui_key, str);
+                    free(ui_key);
+                }
+            }
+        }
+    }
+    else
+    {
+        // Clear metadata
+        ghb_dict_set_string(ud->settings, "MetaName", "");
+        ghb_dict_set_string(ud->settings, "MetaArtist", "");
+        ghb_dict_set_string(ud->settings, "MetaReleaseDate", "");
+        ghb_dict_set_string(ud->settings, "MetaComment", "");
+        ghb_dict_set_string(ud->settings, "MetaAlbumArtist", "");
+        ghb_dict_set_string(ud->settings, "MetaGenre", "");
+        ghb_dict_set_string(ud->settings, "MetaDescription", "");
+        ghb_dict_set_string(ud->settings, "MetaLongDescription", "");
+
+        GhbValue * meta = ghb_get_job_metadata_settings(ud->settings);
+        hb_dict_clear(meta);
+    }
+
+    // Update UI
+    ghb_ui_update_from_settings(ud, "MetaName", ud->settings);
+    ghb_ui_update_from_settings(ud, "MetaArtist", ud->settings);
+    ghb_ui_update_from_settings(ud, "MetaReleaseDate", ud->settings);
+    ghb_ui_update_from_settings(ud, "MetaComment", ud->settings);
+    ghb_ui_update_from_settings(ud, "MetaAlbumArtist", ud->settings);
+    ghb_ui_update_from_settings(ud, "MetaGenre", ud->settings);
+    ghb_ui_update_from_settings(ud, "MetaDescription", ud->settings);
+    ghb_ui_update_from_settings(ud, "MetaLongDescription", ud->settings);
+}
+
+G_MODULE_EXPORT void
+filter_widget_changed_cb(GtkWidget *widget, signal_user_data_t *ud)
+{
+    setting_widget_changed_cb(widget, ud);
+    update_preview = TRUE;
 }
 
 G_MODULE_EXPORT void
@@ -3235,28 +3321,61 @@ ptop_output_cb(GtkWidget *widget, signal_user_data_t *ud)
     return TRUE;
 }
 
-G_MODULE_EXPORT void
-start_point_changed_cb(GtkWidget *widget, signal_user_data_t *ud)
+static void sanitize_ptop(signal_user_data_t * ud, int end_changed)
 {
     int64_t start, end;
 
-    ghb_widget_to_setting(ud->settings, widget);
-
-    GhbValue *dest  = ghb_get_job_dest_settings(ud->settings);
-    GhbValue *range = ghb_get_job_range_settings(ud->settings);
     if (ghb_settings_combo_int(ud->settings, "PtoPType") == 0)
     {
         start = ghb_dict_get_int(ud->settings, "start_point");
         end   = ghb_dict_get_int(ud->settings, "end_point");
         if (start > end)
         {
-            ghb_ui_update(ud, "end_point", ghb_int_value(start));
-            end = start;
+            if (end_changed == 1)
+                ghb_ui_update(ud, "start_point", ghb_int_value(end));
+            else
+                ghb_ui_update(ud, "end_point", ghb_int_value(start));
         }
-        ghb_check_dependency(ud, widget, NULL);
+    }
+    else if (ghb_settings_combo_int(ud->settings, "PtoPType") == 1)
+    {
+        start = ghb_dict_get_double(ud->settings, "start_point") * 90000;
+        end   = ghb_dict_get_double(ud->settings, "end_point") * 90000;
+        if (start >= end)
+        {
+            if (end_changed == 1)
+                ghb_ui_update(ud, "start_point", ghb_int_value(end-1));
+            else
+                ghb_ui_update(ud, "end_point", ghb_int_value(start+1));
+        }
+    }
+    else if (ghb_settings_combo_int(ud->settings, "PtoPType") == 2)
+    {
+        start = ghb_dict_get_int(ud->settings, "start_point");
+        end   = ghb_dict_get_int(ud->settings, "end_point");
+        if (start > end)
+        {
+            if (end_changed == 1)
+                ghb_ui_update(ud, "start_point", ghb_int_value(end));
+            else
+                ghb_ui_update(ud, "end_point", ghb_int_value(start));
+        }
+    }
+}
+
+static void update_ptop(signal_user_data_t * ud)
+{
+    int64_t start, end;
+    GhbValue *dest  = ghb_get_job_dest_settings(ud->settings);
+    GhbValue *range = ghb_get_job_range_settings(ud->settings);
+
+    if (ghb_settings_combo_int(ud->settings, "PtoPType") == 0)
+    {
+        start = ghb_dict_get_int(ud->settings, "start_point");
+        end   = ghb_dict_get_int(ud->settings, "end_point");
         if (check_name_template(ud, "{chapters}"))
             set_destination(ud);
-        widget = GHB_WIDGET (ud->builder, "ChapterMarkers");
+        GtkWidget *widget = GHB_WIDGET (ud->builder, "ChapterMarkers");
         gtk_widget_set_sensitive(widget, end > start);
         update_title_duration(ud);
 
@@ -3271,12 +3390,6 @@ start_point_changed_cb(GtkWidget *widget, signal_user_data_t *ud)
     {
         start = ghb_dict_get_double(ud->settings, "start_point") * 90000;
         end   = ghb_dict_get_double(ud->settings, "end_point") * 90000;
-        if (start >= end)
-        {
-            ghb_ui_update(ud, "end_point", ghb_int_value(start+1));
-            end = start + 90000;
-        }
-        ghb_check_dependency(ud, widget, NULL);
         update_title_duration(ud);
 
         ghb_dict_set_int(range, "Start", start);
@@ -3286,12 +3399,6 @@ start_point_changed_cb(GtkWidget *widget, signal_user_data_t *ud)
     {
         start = ghb_dict_get_int(ud->settings, "start_point");
         end   = ghb_dict_get_int(ud->settings, "end_point");
-        if (start > end)
-        {
-            ghb_ui_update(ud, "end_point", ghb_int_value(start));
-            end = start;
-        }
-        ghb_check_dependency(ud, widget, NULL);
         update_title_duration(ud);
 
         ghb_dict_set_int(range, "Start", start);
@@ -3300,67 +3407,39 @@ start_point_changed_cb(GtkWidget *widget, signal_user_data_t *ud)
 }
 
 G_MODULE_EXPORT void
+ptop_edited_cb(GtkWidget *widget, signal_user_data_t *ud)
+{
+    if (ghb_settings_combo_int(ud->settings, "PtoPType") == 1)
+        return;
+
+    const gchar *text, *key;
+    int val = 0;
+
+    text = ghb_editable_get_text(widget);
+    if (text == NULL || text[0] == 0)
+        return;
+    val = g_strtod(text, NULL);
+    key = ghb_get_setting_key(widget);
+    ghb_dict_set_int(ud->settings, key, val);
+    update_ptop(ud);
+}
+
+G_MODULE_EXPORT void
+start_point_changed_cb(GtkWidget *widget, signal_user_data_t *ud)
+{
+    ghb_widget_to_setting(ud->settings, widget);
+    sanitize_ptop(ud, 0);
+    ghb_check_dependency(ud, widget, NULL);
+    update_ptop(ud);
+}
+
+G_MODULE_EXPORT void
 end_point_changed_cb(GtkWidget *widget, signal_user_data_t *ud)
 {
-    int64_t start, end;
-
     ghb_widget_to_setting(ud->settings, widget);
-
-    GhbValue *dest  = ghb_get_job_dest_settings(ud->settings);
-    GhbValue *range = ghb_get_job_range_settings(ud->settings);
-    if (ghb_settings_combo_int(ud->settings, "PtoPType") == 0)
-    {
-        start = ghb_dict_get_int(ud->settings, "start_point");
-        end   = ghb_dict_get_int(ud->settings, "end_point");
-        if (start > end)
-        {
-            ghb_ui_update(ud, "start_point", ghb_int_value(end));
-            start = end;
-        }
-        ghb_check_dependency(ud, widget, NULL);
-        if (check_name_template(ud, "{chapters}"))
-            set_destination(ud);
-        widget = GHB_WIDGET (ud->builder, "ChapterMarkers");
-        gtk_widget_set_sensitive(widget, end > start);
-        update_title_duration(ud);
-
-        gboolean markers;
-        markers  = ghb_dict_get_int(ud->settings, "ChapterMarkers");
-        markers &= (end > start);
-        ghb_dict_set_bool(dest, "ChapterMarkers", markers);
-        ghb_dict_set_int(range, "Start", start);
-        ghb_dict_set_int(range, "End", end);
-    }
-    else if (ghb_settings_combo_int(ud->settings, "PtoPType") == 1)
-    {
-        start = ghb_dict_get_double(ud->settings, "start_point") * 90000;
-        end   = ghb_dict_get_double(ud->settings, "end_point") * 90000;
-        if (start >= end)
-        {
-            ghb_ui_update(ud, "start_point", ghb_int_value(end-1));
-            start = end - 90000;
-        }
-        ghb_check_dependency(ud, widget, NULL);
-        update_title_duration(ud);
-
-        ghb_dict_set_int(range, "Start", start);
-        ghb_dict_set_int(range, "End", end);
-    }
-    else if (ghb_settings_combo_int(ud->settings, "PtoPType") == 2)
-    {
-        start = ghb_dict_get_int(ud->settings, "start_point");
-        end   = ghb_dict_get_int(ud->settings, "end_point");
-        if (start > end)
-        {
-            ghb_ui_update(ud, "start_point", ghb_int_value(end));
-            start = end;
-        }
-        ghb_check_dependency(ud, widget, NULL);
-        update_title_duration(ud);
-
-        ghb_dict_set_int(range, "Start", start);
-        ghb_dict_set_int(range, "End", end);
-    }
+    sanitize_ptop(ud, 1);
+    ghb_check_dependency(ud, widget, NULL);
+    update_ptop(ud);
 }
 
 G_MODULE_EXPORT void
@@ -3371,11 +3450,9 @@ scale_width_changed_cb(GtkWidget *widget, signal_user_data_t *ud)
     ghb_check_dependency(ud, widget, NULL);
     ghb_clear_presets_selection(ud);
     if (gtk_widget_is_sensitive(widget))
-        ghb_set_scale(ud, GHB_PIC_KEEP_WIDTH|GHB_PIC_KEEP_PAR);
+        ghb_set_scale(ud, GHB_PIC_KEEP_WIDTH);
     update_preview = TRUE;
     ghb_live_reset(ud);
-
-    update_scale_info(ud);
 }
 
 G_MODULE_EXPORT void
@@ -3386,12 +3463,10 @@ scale_height_changed_cb(GtkWidget *widget, signal_user_data_t *ud)
     ghb_check_dependency(ud, widget, NULL);
     ghb_clear_presets_selection(ud);
     if (gtk_widget_is_sensitive(widget))
-        ghb_set_scale(ud, GHB_PIC_KEEP_HEIGHT|GHB_PIC_KEEP_PAR);
+        ghb_set_scale(ud, GHB_PIC_KEEP_HEIGHT);
 
     update_preview = TRUE;
     ghb_live_reset(ud);
-
-    update_scale_info(ud);
 }
 
 G_MODULE_EXPORT void
@@ -3402,11 +3477,23 @@ crop_changed_cb(GtkWidget *widget, signal_user_data_t *ud)
     ghb_check_dependency(ud, widget, NULL);
     ghb_clear_presets_selection(ud);
     if (gtk_widget_is_sensitive(widget))
-        ghb_set_scale(ud, GHB_PIC_KEEP_PAR);
+        ghb_set_scale(ud, 0);
     update_preview = TRUE;
     ghb_live_reset(ud);
+}
 
-    update_crop_info(ud);
+G_MODULE_EXPORT void
+pad_changed_cb(GtkWidget *widget, signal_user_data_t *ud)
+{
+    g_debug("pad_changed_cb ()");
+    ghb_widget_to_setting(ud->settings, widget);
+    ghb_check_dependency(ud, widget, NULL);
+    ghb_clear_presets_selection(ud);
+    ghb_live_reset(ud);
+    if (gtk_widget_is_sensitive(widget))
+        ghb_set_scale(ud, 0);
+
+    update_preview = TRUE;
 }
 
 G_MODULE_EXPORT void
@@ -3432,7 +3519,7 @@ display_height_changed_cb(GtkWidget *widget, signal_user_data_t *ud)
     ghb_clear_presets_selection(ud);
     ghb_live_reset(ud);
     if (gtk_widget_is_sensitive(widget))
-        ghb_set_scale(ud, GHB_PIC_KEEP_DISPLAY_HEIGHT|GHB_PIC_KEEP_PAR);
+        ghb_set_scale(ud, GHB_PIC_KEEP_DISPLAY_HEIGHT);
 
     update_preview = TRUE;
 }
@@ -3446,7 +3533,7 @@ par_changed_cb(GtkWidget *widget, signal_user_data_t *ud)
     ghb_clear_presets_selection(ud);
     ghb_live_reset(ud);
     if (gtk_widget_is_sensitive(widget))
-        ghb_set_scale(ud, GHB_PIC_KEEP_PAR);
+        ghb_set_scale(ud, GHB_PIC_KEEP_HEIGHT);
 
     update_preview = TRUE;
 }
@@ -3460,10 +3547,108 @@ scale_changed_cb(GtkWidget *widget, signal_user_data_t *ud)
     ghb_clear_presets_selection(ud);
     ghb_live_reset(ud);
     if (gtk_widget_is_sensitive(widget))
-        ghb_set_scale(ud, GHB_PIC_KEEP_PAR);
+        ghb_set_scale(ud, 0);
     update_preview = TRUE;
+}
 
-    update_aspect_info(ud);
+G_MODULE_EXPORT void
+rotate_changed_cb(GtkWidget *widget, signal_user_data_t *ud)
+{
+    int angle, hflip, prev_angle, prev_hflip;
+
+    g_debug("rotate_changed_cb ()");
+    prev_angle = ghb_dict_get_int(ud->settings, "rotate");
+    prev_hflip = ghb_dict_get_int(ud->settings, "hflip");
+
+    ghb_widget_to_setting(ud->settings, widget);
+    ghb_check_dependency(ud, widget, NULL);
+    ghb_clear_presets_selection(ud);
+    ghb_live_reset(ud);
+
+    hb_geometry_crop_t   geo;
+
+    // First normalize current settings to 0 angle 0 hflip
+    geo.geometry.width   = ghb_dict_get_int(ud->settings, "scale_width");
+    geo.geometry.height  = ghb_dict_get_int(ud->settings, "scale_height");
+    geo.geometry.par.num =
+        ghb_dict_get_int(ud->settings, "PicturePARWidth");
+    geo.geometry.par.den =
+        ghb_dict_get_int(ud->settings, "PicturePARHeight");
+    geo.crop[0] = ghb_dict_get_int(ud->settings, "PictureTopCrop");
+    geo.crop[1] = ghb_dict_get_int(ud->settings, "PictureBottomCrop");
+    geo.crop[2] = ghb_dict_get_int(ud->settings, "PictureLeftCrop");
+    geo.crop[3] = ghb_dict_get_int(ud->settings, "PictureRightCrop");
+
+    geo.pad[0] = ghb_dict_get_int(ud->settings, "PicturePadTop");
+    geo.pad[1] = ghb_dict_get_int(ud->settings, "PicturePadBottom");
+    geo.pad[2] = ghb_dict_get_int(ud->settings, "PicturePadLeft");
+    geo.pad[3] = ghb_dict_get_int(ud->settings, "PicturePadRight");
+    // Normally hflip is applied, then rotation.
+    // To revert, must apply rotation then hflip.
+    hb_rotate_geometry(&geo, &geo, 360 - prev_angle, 0);
+    hb_rotate_geometry(&geo, &geo, 0, prev_hflip);
+
+    const hb_title_t   * title;
+    int                  title_id, titleindex;
+
+    title_id = ghb_dict_get_int(ud->settings, "title");
+    title = ghb_lookup_title(title_id, &titleindex);
+    if (title != NULL)
+    {
+        // If there is a title, reset to title width/height so that
+        // dimension limits get properly re-applied
+        geo.geometry.width = title->geometry.width;
+        geo.geometry.height = title->geometry.height;
+    }
+
+    // rotate dimensions to new angle and hflip
+    angle = ghb_dict_get_int(ud->settings, "rotate");
+    hflip = ghb_dict_get_int(ud->settings, "hflip");
+    hb_rotate_geometry(&geo, &geo, angle, hflip);
+
+    ghb_dict_set_int(ud->settings, "scale_width",
+             geo.geometry.width - geo.crop[2] - geo.crop[3]);
+    ghb_dict_set_int(ud->settings, "scale_height",
+             geo.geometry.height - geo.crop[0] - geo.crop[1]);
+    ghb_dict_set_int(ud->settings, "PicturePARWidth",   geo.geometry.par.num);
+    ghb_dict_set_int(ud->settings, "PicturePARHeight",  geo.geometry.par.den);
+    ghb_dict_set_int(ud->settings, "PictureTopCrop",    geo.crop[0]);
+    ghb_dict_set_int(ud->settings, "PictureBottomCrop", geo.crop[1]);
+    ghb_dict_set_int(ud->settings, "PictureLeftCrop",   geo.crop[2]);
+    ghb_dict_set_int(ud->settings, "PictureRightCrop",  geo.crop[3]);
+
+    ghb_dict_set_int(ud->settings, "PicturePadTop",    geo.pad[0]);
+    ghb_dict_set_int(ud->settings, "PicturePadBottom", geo.pad[1]);
+    ghb_dict_set_int(ud->settings, "PicturePadLeft",   geo.pad[2]);
+    ghb_dict_set_int(ud->settings, "PicturePadRight",  geo.pad[3]);
+
+    ghb_set_scale(ud, 0);
+    update_preview = TRUE;
+}
+
+G_MODULE_EXPORT void
+resolution_limit_changed_cb(GtkWidget *widget, signal_user_data_t *ud)
+{
+    g_debug("resolution_limit_changed_cb ()");
+    ghb_widget_to_setting(ud->settings, widget);
+    ghb_check_dependency(ud, widget, NULL);
+    ghb_clear_presets_selection(ud);
+    ghb_live_reset(ud);
+
+    const gchar * resolution_limit;
+    int           width, height;
+
+    resolution_limit = ghb_dict_get_string(ud->settings, "resolution_limit");
+    ghb_lookup_resolution_limit_dimensions(resolution_limit, &width, &height);
+    if (width >= 0 && height >= 0)
+    {
+        ghb_dict_set_int(ud->settings, "PictureWidth", width);
+        ghb_dict_set_int(ud->settings, "PictureHeight", height);
+    }
+
+    ghb_set_scale(ud, GHB_PIC_KEEP_HEIGHT);
+
+    update_preview = TRUE;
 }
 
 G_MODULE_EXPORT void
@@ -4312,7 +4497,7 @@ ghb_timer_cb(gpointer data)
     if (update_preview)
     {
         g_debug("Updating preview\n");
-        ghb_set_preview_image (ud);
+        ghb_set_preview_image(ud);
         update_preview = FALSE;
     }
 

@@ -48,7 +48,7 @@ namespace HandBrakeWPF.ViewModels
             this.errorService = errorService;
             this.windowManager = windowManager;
             this.Title = "Manage Preset";
-            this.Preset = new Preset { IsBuildIn = false, IsDefault = false, Category = PresetService.UserPresetCatgoryName };
+            this.Preset = new Preset { IsBuildIn = false, IsDefault = false, Category = PresetService.UserPresetCategoryName };
         }
 
         /// <summary>
@@ -115,7 +115,7 @@ namespace HandBrakeWPF.ViewModels
         /// </summary>
         public void Close()
         {
-            this.TryClose();
+            this.TryCloseAsync();
         }
     }
 }

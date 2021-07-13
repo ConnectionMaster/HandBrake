@@ -14,43 +14,32 @@ namespace HandBrakeWPF.Model.Audio
 
     using Caliburn.Micro;
 
-    /// <summary>
-    /// Audio Behaviours
-    /// </summary>
+    using HandBrakeWPF.Services.Encode.Model.Models;
+
     public class AudioBehaviours : PropertyChangedBase
     {
         private AudioBehaviourModes selectedBehaviour;
-        private BindingList<string> selectedLangauges;
+        private BindingList<string> selectedLanguages;
         private AudioTrackDefaultsMode trackDefaultBehaviour;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AudioBehaviours"/> class.
-        /// </summary>
+        
         public AudioBehaviours()
         {
             this.SelectedBehaviour = AudioBehaviourModes.None;
             this.SelectedTrackDefaultBehaviour = AudioTrackDefaultsMode.FirstTrack;
-            this.SelectedLangauges = new BindingList<string>();
+            this.SelectedLanguages = new BindingList<string>();
             this.BehaviourTracks = new BindingList<AudioBehaviourTrack>();
+            this.AllowedPassthruOptions = new AllowedPassthru();
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AudioBehaviours"/> class.
-        /// </summary>
-        /// <param name="behaviours">
-        /// The behaviours.
-        /// </param>
         public AudioBehaviours(AudioBehaviours behaviours)
         {
             this.SelectedBehaviour = behaviours.SelectedBehaviour;
             this.SelectedTrackDefaultBehaviour = behaviours.SelectedTrackDefaultBehaviour;
-            this.SelectedLangauges = new BindingList<string>(behaviours.selectedLangauges.ToList());
+            this.SelectedLanguages = new BindingList<string>(behaviours.selectedLanguages.ToList());
             this.BehaviourTracks = behaviours.BehaviourTracks;
+            this.AllowedPassthruOptions = new AllowedPassthru(behaviours.AllowedPassthruOptions);
         }
 
-        /// <summary>
-        /// Gets or sets the selected behaviour.
-        /// </summary>
         public AudioBehaviourModes SelectedBehaviour
         {
             get
@@ -69,9 +58,6 @@ namespace HandBrakeWPF.Model.Audio
             }
         }
 
-        /// <summary>
-        /// Gets or sets the track default behaviour.
-        /// </summary>
         public AudioTrackDefaultsMode SelectedTrackDefaultBehaviour
         {
             get
@@ -89,53 +75,25 @@ namespace HandBrakeWPF.Model.Audio
             }
         }
 
-        /// <summary>
-        /// Gets or sets the selected languages.
-        /// </summary>
-        public BindingList<string> SelectedLangauges
+        public BindingList<string> SelectedLanguages
         {
             get
             {
-                return this.selectedLangauges;
+                return this.selectedLanguages;
             }
             set
             {
-                if (Equals(value, this.selectedLangauges))
+                if (Equals(value, this.selectedLanguages))
                 {
                     return;
                 }
-                this.selectedLangauges = value;
-                this.NotifyOfPropertyChange(() => this.SelectedLangauges);
+                this.selectedLanguages = value;
+                this.NotifyOfPropertyChange(() => this.SelectedLanguages);
             }
         }
 
-        /// <summary>
-        /// The list of track templates we are going to use to generate audio tracks for a source.
-        /// </summary>
         public BindingList<AudioBehaviourTrack> BehaviourTracks { get; set; }
 
-        /// <summary>
-        /// Clone this object
-        /// </summary>
-        /// <returns>
-        /// The <see cref="object"/>.
-        /// </returns>
-        public AudioBehaviours Clone()
-        {
-            AudioBehaviours cloned = new AudioBehaviours
-            {
-                SelectedBehaviour = this.selectedBehaviour,
-                SelectedLangauges = new BindingList<string>(),
-                SelectedTrackDefaultBehaviour = this.SelectedTrackDefaultBehaviour,
-                BehaviourTracks = this.BehaviourTracks
-            };
-
-            foreach (var item in this.SelectedLangauges)
-            {
-                cloned.SelectedLangauges.Add(item);
-            }
-
-            return cloned;
-        }
+        public AllowedPassthru AllowedPassthruOptions { get; set; }
     }
 }

@@ -3,7 +3,7 @@
 //   This file is part of the HandBrake source code - It may be used under the terms of the GNU General Public License.
 // </copyright>
 // <summary>
-//   Defines the HandrakeUnitConversionHelpers type.
+//   Defines the HandBrakeUnitConversionHelpers type.
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -16,8 +16,8 @@ namespace HandBrake.Interop.Interop
 
     using HandBrake.Interop.Interop.HbLib;
     using HandBrake.Interop.Interop.Helpers;
-    using HandBrake.Interop.Interop.Model;
-    using HandBrake.Interop.Interop.Model.Encoding;
+    using HandBrake.Interop.Interop.Interfaces.Model;
+    using HandBrake.Interop.Interop.Interfaces.Model.Encoders;
 
     /// <summary>
     /// Converters for various encoding values.

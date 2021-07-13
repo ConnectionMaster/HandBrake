@@ -18,11 +18,10 @@ namespace HandBrakeWPF.Services.Queue
     using System.Timers;
     using System.Windows;
 
+    using HandBrake.Interop.Interop;
+    using HandBrake.Interop.Interop.Interfaces.Model;
     using HandBrake.Interop.Interop.Json.Queue;
-    using HandBrake.Interop.Json;
-    using HandBrake.Interop.Model;
     using HandBrake.Interop.Utilities;
-    using HandBrake.Worker.Routing.Commands;
 
     using HandBrakeWPF.Factories;
     using HandBrakeWPF.Helpers;
@@ -156,7 +155,7 @@ namespace HandBrakeWPF.Services.Queue
         {
             lock (this.queueFileLock)
             {
-                string appDataPath = DirectoryUtilities.GetUserStoragePath(VersionHelper.IsNightly());
+                string appDataPath = DirectoryUtilities.GetUserStoragePath(HandBrakeVersionHelper.IsNightly());
                 string tempPath = !string.IsNullOrEmpty(exportPath)
                                       ? exportPath
                                       : Path.Combine(appDataPath, string.Format(this.queueFile, string.Empty));
@@ -431,7 +430,7 @@ namespace HandBrakeWPF.Services.Queue
 
         public void RestoreQueue(string importPath)
         {
-            string appDataPath = DirectoryUtilities.GetUserStoragePath(VersionHelper.IsNightly());
+            string appDataPath = DirectoryUtilities.GetUserStoragePath(HandBrakeVersionHelper.IsNightly());
             string tempPath = !string.IsNullOrEmpty(importPath)
                                   ? importPath
                                   : (appDataPath + string.Format(this.queueFile, string.Empty));
@@ -700,7 +699,7 @@ namespace HandBrakeWPF.Services.Queue
 
         private void OnQueueJobStatusChanged()
         {
-            // TODO add support for delayed notificaitons here to avoid overloading the UI when we run multiple encodes. 
+            // TODO add support for delayed notifications here to avoid overloading the UI when we run multiple encodes. 
             this.QueueJobStatusChanged?.Invoke(this, EventArgs.Empty);
         }
 

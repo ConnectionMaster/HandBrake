@@ -17,7 +17,7 @@ namespace HandBrakeWPF.ViewModels
     using Caliburn.Micro;
 
     using HandBrake.Interop.Interop;
-    using HandBrake.Interop.Interop.Model.Encoding;
+    using HandBrake.Interop.Interop.Interfaces.Model.Encoders;
     using HandBrake.Interop.Utilities;
 
     using HandBrakeWPF.EventArgs;
@@ -39,9 +39,7 @@ namespace HandBrakeWPF.ViewModels
     /// </summary>
     public class AudioViewModel : ViewModelBase, IAudioViewModel
     {
-        private readonly IWindowManager windowManager;
         private IEnumerable<Audio> sourceTracks;
-        private Preset currentPreset;
 
         #region Constructors and Destructors
 
@@ -56,9 +54,8 @@ namespace HandBrakeWPF.ViewModels
         /// </param>
         public AudioViewModel(IWindowManager windowManager, IUserSettingService userSettingService)
         {
-            this.windowManager = windowManager;
             this.Task = new EncodeTask();
-            this.AudioDefaultsViewModel = new AudioDefaultsViewModel(this.Task);
+            this.AudioDefaultsViewModel = new AudioDefaultsViewModel(windowManager);
 
             this.SampleRates = new ObservableCollection<string> { "Auto" };
             foreach (var item in HandBrakeEncoderHelpers.AudioSampleRates)
@@ -137,13 +134,7 @@ namespace HandBrakeWPF.ViewModels
         /// <summary>
         /// Gets the default audio behaviours. 
         /// </summary>
-        public AudioBehaviours AudioBehaviours
-        {
-            get
-            {
-                return this.AudioDefaultsViewModel.AudioBehaviours;
-            }
-        }
+        public AudioBehaviours AudioBehaviours { get; private set; }
 
         #endregion
 
@@ -196,11 +187,11 @@ namespace HandBrakeWPF.ViewModels
         /// <summary>
         /// Trigger a Notify Property Changed on the Task to force various UI elements to update.
         /// </summary>
-        public void RefreshTask()
+        public void RefreshTask(OutputFormat format)
         {
-            this.NotifyOfPropertyChange(() => this.Task);
+            this.NotifyOfPropertyChange(() => this.Task); // Trigger UI Refresh
 
-            if (this.Task.OutputFormat == OutputFormat.Mp4)
+            if (format == OutputFormat.Mp4)
             {
                 foreach (AudioTrack track in this.Task.AudioTracks.Where(track => track.Encoder == AudioEncoder.ffflac || track.Encoder == AudioEncoder.Vorbis))
                 {
@@ -208,7 +199,7 @@ namespace HandBrakeWPF.ViewModels
                 }
             }
 
-            if (this.Task.OutputFormat == OutputFormat.WebM)
+            if (format == OutputFormat.WebM)
             {
                 foreach (AudioTrack track in this.Task.AudioTracks.Where(track => track.Encoder != AudioEncoder.Vorbis && track.Encoder != AudioEncoder.Opus))
                 {
@@ -216,7 +207,7 @@ namespace HandBrakeWPF.ViewModels
                 }
             }
 
-            this.AudioDefaultsViewModel.RefreshTask();
+            this.AudioDefaultsViewModel.RefreshTask(format);
         }
 
         /// <summary>
@@ -224,8 +215,11 @@ namespace HandBrakeWPF.ViewModels
         /// </summary>
         public void ShowAudioDefaults()
         {
-            if (this.windowManager.ShowDialog(this.AudioDefaultsViewModel) == true)
+            this.AudioDefaultsViewModel.Setup(new AudioBehaviours(this.AudioBehaviours), this.Task.OutputFormat);
+
+            if (this.AudioDefaultsViewModel.ShowWindow())
             {
+                this.AudioBehaviours = new AudioBehaviours(this.AudioDefaultsViewModel.AudioBehaviours);
                 this.OnTabStatusChanged(null);
             }
         }
@@ -246,12 +240,12 @@ namespace HandBrakeWPF.ViewModels
         public void SetPreset(Preset preset, EncodeTask task)
         {
             this.Task = task;
-            this.currentPreset = preset;
 
             // Audio Behaviours
-            this.AudioDefaultsViewModel.Setup(preset, task);
+            this.AudioDefaultsViewModel.Setup(preset.AudioTrackBehaviours, preset.Task.OutputFormat);
+            this.AudioBehaviours = new AudioBehaviours(preset.AudioTrackBehaviours);
 
-            if (preset != null && preset.Task != null)
+            if (preset.Task != null)
             {
                 this.SetupTracks();
             }
@@ -286,73 +280,73 @@ namespace HandBrakeWPF.ViewModels
                 return false;
             }
 
-            foreach (var item in this.AudioBehaviours.SelectedLangauges)
+            foreach (var item in this.AudioBehaviours.SelectedLanguages)
             {
-                if (!preset.AudioTrackBehaviours.SelectedLangauges.Contains(item))
+                if (!preset.AudioTrackBehaviours.SelectedLanguages.Contains(item))
                 {
                     return false;
                 }
             }
 
-            if (preset.Task.AllowedPassthruOptions.AudioAllowMP2Pass != this.Task.AllowedPassthruOptions.AudioAllowMP2Pass)
+            if (preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioAllowMP2Pass != this.Task.AudioPassthruOptions.AudioAllowMP2Pass)
             {
                 return false;
             }
 
-            if (preset.Task.AllowedPassthruOptions.AudioAllowMP3Pass != this.Task.AllowedPassthruOptions.AudioAllowMP3Pass)
+            if (preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioAllowMP3Pass != this.Task.AudioPassthruOptions.AudioAllowMP3Pass)
             {
                 return false;
             }
 
-            if (preset.Task.AllowedPassthruOptions.AudioAllowAACPass != this.Task.AllowedPassthruOptions.AudioAllowAACPass)
+            if (preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioAllowAACPass != this.Task.AudioPassthruOptions.AudioAllowAACPass)
             {
                 return false;
             }
 
-            if (preset.Task.AllowedPassthruOptions.AudioAllowAC3Pass != this.Task.AllowedPassthruOptions.AudioAllowAC3Pass)
+            if (preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioAllowAC3Pass != this.Task.AudioPassthruOptions.AudioAllowAC3Pass)
             {
                 return false;
             }
 
-            if (preset.Task.AllowedPassthruOptions.AudioAllowEAC3Pass != this.Task.AllowedPassthruOptions.AudioAllowEAC3Pass)
+            if (preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioAllowEAC3Pass != this.Task.AudioPassthruOptions.AudioAllowEAC3Pass)
             {
                 return false;
             }
 
-            if (preset.Task.AllowedPassthruOptions.AudioAllowDTSPass != this.Task.AllowedPassthruOptions.AudioAllowDTSPass)
+            if (preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioAllowDTSPass != this.Task.AudioPassthruOptions.AudioAllowDTSPass)
             {
                 return false;
             }
 
-            if (preset.Task.AllowedPassthruOptions.AudioAllowDTSHDPass != this.Task.AllowedPassthruOptions.AudioAllowDTSHDPass)
+            if (preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioAllowDTSHDPass != this.Task.AudioPassthruOptions.AudioAllowDTSHDPass)
             {
                 return false;
             }
 
-            if (preset.Task.AllowedPassthruOptions.AudioAllowTrueHDPass != this.Task.AllowedPassthruOptions.AudioAllowTrueHDPass)
+            if (preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioAllowTrueHDPass != this.Task.AudioPassthruOptions.AudioAllowTrueHDPass)
             {
                 return false;
             }
 
-            if (preset.Task.AllowedPassthruOptions.AudioAllowFlacPass != this.Task.AllowedPassthruOptions.AudioAllowFlacPass)
+            if (preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioAllowFlacPass != this.Task.AudioPassthruOptions.AudioAllowFlacPass)
             {
                 return false;
             }
 
-            if (preset.Task.AllowedPassthruOptions.AudioEncoderFallback != this.Task.AllowedPassthruOptions.AudioEncoderFallback)
+            if (preset.AudioTrackBehaviours.AllowedPassthruOptions.AudioEncoderFallback != this.Task.AudioPassthruOptions.AudioEncoderFallback)
             {
                 return false;
             }
 
-            foreach (var language in preset.AudioTrackBehaviours.SelectedLangauges)
+            foreach (var language in preset.AudioTrackBehaviours.SelectedLanguages)
             {
-                if (!this.AudioBehaviours.SelectedLangauges.Contains(language))
+                if (!this.AudioBehaviours.SelectedLanguages.Contains(language))
                 {
                     return false;
                 }
             }
 
-            if (preset.AudioTrackBehaviours.SelectedLangauges.Count != this.AudioBehaviours.SelectedLangauges.Count)
+            if (preset.AudioTrackBehaviours.SelectedLanguages.Count != this.AudioBehaviours.SelectedLanguages.Count)
             {
                 return false;
             }
@@ -438,17 +432,17 @@ namespace HandBrakeWPF.ViewModels
                     {
                         case AudioTrackDefaultsMode.FirstTrack:
                             AudioBehaviourTrack template = this.AudioBehaviours.BehaviourTracks.FirstOrDefault();
-                            if (this.CanAddTrack(template, track, this.Task.AllowedPassthruOptions.AudioEncoderFallback))
+                            if (this.CanAddTrack(template, track, this.AudioBehaviours.AllowedPassthruOptions.AudioEncoderFallback))
                             {
-                                this.Task.AudioTracks.Add( template != null ? new AudioTrack(template, track, this.Task.AllowedPassthruOptions, this.Task.OutputFormat) : new AudioTrack { ScannedTrack = track });
+                                this.Task.AudioTracks.Add( template != null ? new AudioTrack(template, track, this.AudioBehaviours.AllowedPassthruOptions, this.Task.OutputFormat) : new AudioTrack { ScannedTrack = track });
                             }
                             break;
                         case AudioTrackDefaultsMode.AllTracks:
                             foreach (AudioBehaviourTrack tmpl in this.AudioBehaviours.BehaviourTracks)
                             {
-                                if (this.CanAddTrack(tmpl, track, this.Task.AllowedPassthruOptions.AudioEncoderFallback))
+                                if (this.CanAddTrack(tmpl, track, this.AudioBehaviours.AllowedPassthruOptions.AudioEncoderFallback))
                                 {
-                                    this.Task.AudioTracks.Add(tmpl != null ? new AudioTrack(tmpl, track, this.Task.AllowedPassthruOptions, this.Task.OutputFormat) : new AudioTrack { ScannedTrack = track });
+                                    this.Task.AudioTracks.Add(tmpl != null ? new AudioTrack(tmpl, track, this.AudioBehaviours.AllowedPassthruOptions, this.Task.OutputFormat) : new AudioTrack { ScannedTrack = track });
                                 }
                             }
 
@@ -498,9 +492,9 @@ namespace HandBrakeWPF.ViewModels
             foreach (AudioBehaviourTrack track in this.AudioBehaviours.BehaviourTracks)
             {
                 Audio sourceTrack = this.GetPreferredAudioTrack();
-                if (this.CanAddTrack(track, sourceTrack, this.Task.AllowedPassthruOptions.AudioEncoderFallback))
+                if (this.CanAddTrack(track, sourceTrack, this.AudioBehaviours.AllowedPassthruOptions.AudioEncoderFallback))
                 {
-                    this.Task.AudioTracks.Add(new AudioTrack(track, sourceTrack, this.Task.AllowedPassthruOptions, this.Task.OutputFormat));
+                    this.Task.AudioTracks.Add(new AudioTrack(track, sourceTrack, this.AudioBehaviours.AllowedPassthruOptions, this.Task.OutputFormat));
                 }
             }
            
@@ -513,7 +507,7 @@ namespace HandBrakeWPF.ViewModels
                 case AudioBehaviourModes.FirstMatch: // Adding all remaining audio tracks
                     this.AddFirstForSelectedLanguages();
                     break;
-                case AudioBehaviourModes.AllMatching: // Add Langauges tracks for the additional languages selected, in-order.
+                case AudioBehaviourModes.AllMatching: // Add Languages tracks for the additional languages selected, in-order.
                     this.AddAllRemainingForSelectedLanguages();
                     break;
             }
@@ -524,7 +518,7 @@ namespace HandBrakeWPF.ViewModels
         /// </summary>
         private void AddFirstForSelectedLanguages()
         {
-            bool anyLanguageSelected = this.AudioBehaviours.SelectedLangauges.Contains(Constants.Any);
+            bool anyLanguageSelected = this.AudioBehaviours.SelectedLanguages.Contains(Constants.Any);
 
             if (anyLanguageSelected && this.Task.AudioTracks.Count >= 1)
             {
@@ -569,7 +563,7 @@ namespace HandBrakeWPF.ViewModels
             // For all the source audio tracks
             foreach (Audio sourceTrack in this.SourceTracks)
             {
-                // Step 2: Check if the track list already contrains this track
+                // Step 2: Check if the track list already contains this track
                 bool found = this.Task.AudioTracks.Any(audioTrack => Equals(audioTrack.ScannedTrack, sourceTrack));
                 if (!found)
                 {
@@ -587,7 +581,7 @@ namespace HandBrakeWPF.ViewModels
             // Add them if they are not already added.
             foreach (Audio sourceTrack in this.GetSelectedLanguagesTracks())
             {
-                // Step 2: Check if the track list already contrains this track
+                // Step 2: Check if the track list already contains this track
                 bool found = this.Task.AudioTracks.Any(audioTrack => Equals(audioTrack.ScannedTrack, sourceTrack));
                 if (!found)
                 {
@@ -608,9 +602,9 @@ namespace HandBrakeWPF.ViewModels
             // The first track in the selected languages list is considered the preferred language.
             // So, try match tracks on this.
             IEnumerable<Audio> preferredAudioTracks = new List<Audio>();
-            if (this.AudioBehaviours.SelectedLangauges.Count > 0)
+            if (this.AudioBehaviours.SelectedLanguages.Count > 0)
             {
-                string langName = this.AudioBehaviours.SelectedLangauges.FirstOrDefault(w => !w.Equals(Constants.Any));
+                string langName = this.AudioBehaviours.SelectedLanguages.FirstOrDefault(w => !w.Equals(Constants.Any));
                 string langCode = LanguageUtilities.GetLanguageCode(langName);
                 if (!string.IsNullOrEmpty(langCode))
                 {
@@ -631,14 +625,14 @@ namespace HandBrakeWPF.ViewModels
         {
             // Translate to Iso Codes
             List<string> iso6392Codes = new List<string>();
-            if (this.AudioBehaviours.SelectedLangauges.Contains(Constants.Any))
+            if (this.AudioBehaviours.SelectedLanguages.Contains(Constants.Any))
             {
                 iso6392Codes = LanguageUtilities.GetIsoCodes();
-                iso6392Codes = LanguageUtilities.OrderIsoCodes(iso6392Codes, this.AudioBehaviours.SelectedLangauges);
+                iso6392Codes = LanguageUtilities.OrderIsoCodes(iso6392Codes, this.AudioBehaviours.SelectedLanguages);
             }
             else
             {
-                iso6392Codes = LanguageUtilities.GetLanguageCodes(this.AudioBehaviours.SelectedLangauges.ToArray());
+                iso6392Codes = LanguageUtilities.GetLanguageCodes(this.AudioBehaviours.SelectedLanguages.ToArray());
             }
             
             List<Audio> orderedTracks = new List<Audio>();

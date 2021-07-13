@@ -63,11 +63,6 @@ namespace HandBrakeWPF.Services
         /// </param>
         public void PerformStartupUpdateCheck(Action<UpdateCheckInformation> callback)
         {
-            if (UwpDetect.IsUWP())
-            {
-                return; // Disable Update checker if we are in a UWP container.
-            }
-
             if (Portable.IsPortable() && !Portable.IsUpdateCheckEnabled())
             {
                 return; // Disable Update Check for Portable Mode.
@@ -104,17 +99,17 @@ namespace HandBrakeWPF.Services
                         // Figure out which appcast we want to read.
                         string url = Constants.Appcast64;
 
-                        if (VersionHelper.IsNightly())
+                        if (HandBrakeVersionHelper.IsNightly())
                         {
                             url = Constants.AppcastUnstable64;
                         }
 
-                        var currentBuild = VersionHelper.Build;
+                        var currentBuild = HandBrakeVersionHelper.Build;
 
                         // Fetch the Appcast from our server.
                         HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
                         request.AllowAutoRedirect = false; // We will never do this.
-                        request.UserAgent = string.Format("HandBrake Win Upd {0}", VersionHelper.GetVersionShort());
+                        request.UserAgent = string.Format("HandBrake Win Upd {0}", HandBrakeVersionHelper.GetVersionShort());
                         WebResponse response = request.GetResponse();
 
                         // Parse the data with the AppcastReader
@@ -187,23 +182,23 @@ namespace HandBrakeWPF.Services
 
                        HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(url);
                        webRequest.Credentials = CredentialCache.DefaultCredentials;
-                       webRequest.UserAgent = string.Format("HandBrake Win Upd {0}", VersionHelper.GetVersionShort());
+                       webRequest.UserAgent = string.Format("HandBrake Win Upd {0}", HandBrakeVersionHelper.GetVersionShort());
                        HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
                        long fileSize = webResponse.ContentLength;
 
-                       Stream responceStream = wcDownload.OpenRead(url);
+                       Stream responseStream = wcDownload.OpenRead(url);
                        Stream localStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None);
 
                        int bytesSize;
                        byte[] downBuffer = new byte[2048];
 
-                       while ((bytesSize = responceStream.Read(downBuffer, 0, downBuffer.Length)) > 0)
+                       while ((bytesSize = responseStream.Read(downBuffer, 0, downBuffer.Length)) > 0)
                        {
                            localStream.Write(downBuffer, 0, bytesSize);
                            progress(new DownloadStatus { BytesRead = localStream.Length, TotalBytes = fileSize });
                        }
 
-                       responceStream.Close();
+                       responseStream.Close();
                        localStream.Close();
 
                        completed(
@@ -260,10 +255,10 @@ namespace HandBrakeWPF.Services
             try
             {
                 byte[] file = File.ReadAllBytes(updateFile);
-                using (RSACryptoServiceProvider verifyProfider = new RSACryptoServiceProvider())
+                using (RSACryptoServiceProvider verifyProvider = new RSACryptoServiceProvider())
                 {
-                    verifyProfider.FromXmlString(publicKey);
-                    return verifyProfider.VerifyData(file, "SHA256", Convert.FromBase64String(signature));
+                    verifyProvider.FromXmlString(publicKey);
+                    return verifyProvider.VerifyData(file, "SHA256", Convert.FromBase64String(signature));
                 }
             }
             catch (Exception e)

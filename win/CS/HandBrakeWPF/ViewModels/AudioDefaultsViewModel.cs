@@ -16,8 +16,9 @@ namespace HandBrakeWPF.ViewModels
     using System.Linq;
     using System.Windows.Navigation;
 
+    using Caliburn.Micro;
+
     using HandBrake.Interop.Interop;
-    using HandBrake.Interop.Interop.Model.Encoding;
     using HandBrake.Interop.Utilities;
 
     using HandBrakeWPF.Model.Audio;
@@ -38,23 +39,20 @@ namespace HandBrakeWPF.ViewModels
     /// </remarks>
     public class AudioDefaultsViewModel : ViewModelBase, IAudioDefaultsViewModel
     {
+        private readonly IWindowManager windowManager;
+
         private BindingList<string> availableLanguages;
         private AudioBehaviours audioBehaviours;
-        private EncodeTask task;
-        #region Constructors and Destructors
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AudioDefaultsViewModel"/> class.
         /// </summary>
-        /// <param name="task">
-        /// The task.
-        /// </param>
-        public AudioDefaultsViewModel(EncodeTask task)
+        public AudioDefaultsViewModel(IWindowManager windowManager)
         {
-            this.Task = task;
+            this.windowManager = windowManager;
             this.AudioBehaviours = new AudioBehaviours();
             this.SelectedAvailableToMove = new BindingList<string>();
-            this.SelectedLangaugesToMove = new BindingList<string>();
+            this.SelectedLanguagesToMove = new BindingList<string>();
             this.AvailableLanguages = new BindingList<string>();
             this.AudioEncoders = EnumHelper<AudioEncoder>.GetEnumList();
 
@@ -64,34 +62,12 @@ namespace HandBrakeWPF.ViewModels
                 this.SampleRates.Add(item.Name);
             }
 
-            this.Setup((Preset)null, task);
-
             this.Title = Resources.AudioViewModel_AudioDefaults;
         }
 
-        #endregion
-
         #region Properties
 
-        /// <summary>
-        /// Gets or sets the task.
-        /// </summary>
-        public EncodeTask Task
-        {
-            get
-            {
-                return this.task;
-            }
-            set
-            {
-                if (Equals(value, this.task))
-                {
-                    return;
-                }
-                this.task = value;
-                this.NotifyOfPropertyChange(() => this.Task);
-            }
-        }
+        public OutputFormat OutputFormat { get; private set; }
 
         /// <summary>
         /// Gets or sets the list of audio tracks we will use as templates for generating tracks for a given source.
@@ -133,25 +109,25 @@ namespace HandBrakeWPF.ViewModels
         public bool IsApplied { get; set; }
 
         /// <summary>
-        /// Gets SelectedLangauges.
+        /// Gets SelectedLanguages.
         /// </summary>
         public BindingList<string> SelectedAvailableToMove { get; private set; }
 
         /// <summary>
-        /// Gets SelectedLangauges.
+        /// Gets SelectedLanguages.
         /// </summary>
-        public BindingList<string> SelectedLangaugesToMove { get; private set; }
+        public BindingList<string> SelectedLanguagesToMove { get; private set; }
 
         public bool AudioAllowMP2Pass
         {
             get
             {
-                return this.Task.AllowedPassthruOptions.AudioAllowMP2Pass;
+                return this.audioBehaviours.AllowedPassthruOptions.AudioAllowMP2Pass;
             }
 
             set
             {
-                this.task.AllowedPassthruOptions.AudioAllowMP2Pass = value;
+                this.audioBehaviours.AllowedPassthruOptions.AudioAllowMP2Pass = value;
                 this.NotifyOfPropertyChange(() => this.AudioAllowMP2Pass);
             }
         }
@@ -163,12 +139,12 @@ namespace HandBrakeWPF.ViewModels
         {
             get
             {
-                return this.Task.AllowedPassthruOptions.AudioAllowMP3Pass;
+                return this.audioBehaviours.AllowedPassthruOptions.AudioAllowMP3Pass;
             }
 
             set
             {
-                this.task.AllowedPassthruOptions.AudioAllowMP3Pass = value;
+                this.audioBehaviours.AllowedPassthruOptions.AudioAllowMP3Pass = value;
                 this.NotifyOfPropertyChange(() => this.AudioAllowMP3Pass);
             }
         }
@@ -180,12 +156,12 @@ namespace HandBrakeWPF.ViewModels
         {
             get
             {
-                return this.Task.AllowedPassthruOptions.AudioAllowAACPass;
+                return this.audioBehaviours.AllowedPassthruOptions.AudioAllowAACPass;
             }
 
             set
             {
-                this.task.AllowedPassthruOptions.AudioAllowAACPass = value;
+                this.audioBehaviours.AllowedPassthruOptions.AudioAllowAACPass = value;
                 this.NotifyOfPropertyChange(() => this.AudioAllowAACPass);
             }
         }
@@ -197,12 +173,12 @@ namespace HandBrakeWPF.ViewModels
         {
             get
             {
-                return this.Task.AllowedPassthruOptions.AudioAllowAC3Pass;
+                return this.audioBehaviours.AllowedPassthruOptions.AudioAllowAC3Pass;
             }
 
             set
             {
-                this.task.AllowedPassthruOptions.AudioAllowAC3Pass = value;
+                this.audioBehaviours.AllowedPassthruOptions.AudioAllowAC3Pass = value;
                 this.NotifyOfPropertyChange(() => this.AudioAllowAC3Pass);
             }
         }
@@ -214,12 +190,12 @@ namespace HandBrakeWPF.ViewModels
         {
             get
             {
-                return this.Task.AllowedPassthruOptions.AudioAllowEAC3Pass;
+                return this.audioBehaviours.AllowedPassthruOptions.AudioAllowEAC3Pass;
             }
 
             set
             {
-                this.task.AllowedPassthruOptions.AudioAllowEAC3Pass = value;
+                this.audioBehaviours.AllowedPassthruOptions.AudioAllowEAC3Pass = value;
                 this.NotifyOfPropertyChange(() => this.AudioAllowEAC3Pass);
             }
         }
@@ -231,12 +207,12 @@ namespace HandBrakeWPF.ViewModels
         {
             get
             {
-                return this.Task.AllowedPassthruOptions.AudioAllowDTSPass;
+                return this.audioBehaviours.AllowedPassthruOptions.AudioAllowDTSPass;
             }
 
             set
             {
-                this.task.AllowedPassthruOptions.AudioAllowDTSPass = value;
+                this.audioBehaviours.AllowedPassthruOptions.AudioAllowDTSPass = value;
                 this.NotifyOfPropertyChange(() => this.AudioAllowDTSPass);
             }
         }
@@ -248,12 +224,12 @@ namespace HandBrakeWPF.ViewModels
         {
             get
             {
-                return this.Task.AllowedPassthruOptions.AudioAllowDTSHDPass;
+                return this.audioBehaviours.AllowedPassthruOptions.AudioAllowDTSHDPass;
             }
 
             set
             {
-                this.task.AllowedPassthruOptions.AudioAllowDTSHDPass = value;
+                this.audioBehaviours.AllowedPassthruOptions.AudioAllowDTSHDPass = value;
                 this.NotifyOfPropertyChange(() => this.AudioAllowDTSHDPass);
             }
         }
@@ -265,12 +241,12 @@ namespace HandBrakeWPF.ViewModels
         {
             get
             {
-                return this.Task.AllowedPassthruOptions.AudioAllowTrueHDPass;
+                return this.audioBehaviours.AllowedPassthruOptions.AudioAllowTrueHDPass;
             }
 
             set
             {
-                this.task.AllowedPassthruOptions.AudioAllowTrueHDPass = value;
+                this.audioBehaviours.AllowedPassthruOptions.AudioAllowTrueHDPass = value;
                 this.NotifyOfPropertyChange(() => this.AudioAllowTrueHDPass);
             }
         }
@@ -282,12 +258,12 @@ namespace HandBrakeWPF.ViewModels
         {
             get
             {
-                return this.Task.AllowedPassthruOptions.AudioAllowFlacPass;
+                return this.audioBehaviours.AllowedPassthruOptions.AudioAllowFlacPass;
             }
 
             set
             {
-                this.task.AllowedPassthruOptions.AudioAllowFlacPass = value;
+                this.audioBehaviours.AllowedPassthruOptions.AudioAllowFlacPass = value;
                 this.NotifyOfPropertyChange(() => this.AudioAllowFlacPass);
             }
         }
@@ -299,15 +275,16 @@ namespace HandBrakeWPF.ViewModels
         {
             get
             {
-                return this.Task.AllowedPassthruOptions.AudioEncoderFallback;
+                return this.audioBehaviours.AllowedPassthruOptions.AudioEncoderFallback;
             }
+
             set
             {
-                if (value == this.Task.AllowedPassthruOptions.AudioEncoderFallback)
+                if (value == this.audioBehaviours.AllowedPassthruOptions.AudioEncoderFallback)
                 {
                     return;
                 }
-                this.Task.AllowedPassthruOptions.AudioEncoderFallback = value;
+                this.audioBehaviours.AllowedPassthruOptions.AudioEncoderFallback = value;
                 this.NotifyOfPropertyChange(() => this.AudioEncoderFallback);
             }
         }
@@ -351,7 +328,7 @@ namespace HandBrakeWPF.ViewModels
             private set
             {
                 this.availableLanguages = value;
-                this.NotifyOfPropertyChange("AvailableLanguages");
+                this.NotifyOfPropertyChange(() => this.AvailableLanguages);
             }
         }
 
@@ -407,7 +384,7 @@ namespace HandBrakeWPF.ViewModels
                 foreach (string item in copiedList)
                 {
                     this.AvailableLanguages.Remove(item);
-                    this.AudioBehaviours.SelectedLangauges.Add(item);
+                    this.AudioBehaviours.SelectedLanguages.Add(item);
                 }
 
                 this.AvailableLanguages = new BindingList<string>(this.AvailableLanguages.OrderBy(o => o).ToList());
@@ -419,12 +396,12 @@ namespace HandBrakeWPF.ViewModels
         /// </summary>
         public void LanguageMoveLeft()
         {
-            if (this.SelectedLangaugesToMove.Count > 0)
+            if (this.SelectedLanguagesToMove.Count > 0)
             {
-                List<string> copiedList = this.SelectedLangaugesToMove.ToList();
+                List<string> copiedList = this.SelectedLanguagesToMove.ToList();
                 foreach (string item in copiedList)
                 {
-                    this.AudioBehaviours.SelectedLangauges.Remove(item);
+                    this.AudioBehaviours.SelectedLanguages.Remove(item);
                     this.AvailableLanguages.Add(item);
                 }
             }
@@ -437,41 +414,24 @@ namespace HandBrakeWPF.ViewModels
         /// </summary>
         public void LanguageClearAll()
         {
-            foreach (string item in this.AudioBehaviours.SelectedLangauges)
+            foreach (string item in this.AudioBehaviours.SelectedLanguages)
             {
                 this.AvailableLanguages.Add(item);
             }
             this.AvailableLanguages = new BindingList<string>(this.AvailableLanguages.OrderBy(o => o).ToList());
 
-            this.AudioBehaviours.SelectedLangauges.Clear();
-        }
-
-        public void ResetApplied()
-        {
-            this.IsApplied = false;
+            this.AudioBehaviours.SelectedLanguages.Clear();
         }
 
         #endregion
 
         #region Methods
 
-        /// <summary>
-        /// The setup languages.
-        /// </summary>
-        /// <param name="preset">
-        /// The preset.
-        /// </param>
-        /// <param name="task">
-        /// The task.
-        /// </param>
-        public void Setup(Preset preset, EncodeTask task)
+        public void Setup(AudioBehaviours behaviours, OutputFormat outputFormat)
         {
             // Reset
             this.IsApplied = false;
             this.AudioBehaviours = new AudioBehaviours();
-
-            // Setup for this Encode Task.
-            this.Task = task;
 
             IDictionary<string, string> langList = LanguageUtilities.MapLanguages();
             langList = (from entry in langList orderby entry.Key ascending select entry).ToDictionary(pair => pair.Key, pair => pair.Value);
@@ -482,33 +442,29 @@ namespace HandBrakeWPF.ViewModels
                 this.AvailableLanguages.Add(item);
             }
 
-            // Handle the Preset, if it's not null.
-            if (preset == null)
-            {
-                return;
-            }
-           
-            AudioBehaviours behaviours = preset.AudioTrackBehaviours.Clone();
+            this.OutputFormat = outputFormat;
+
             if (behaviours != null)
             {
                 this.AudioBehaviours.SelectedBehaviour = behaviours.SelectedBehaviour;
                 this.AudioBehaviours.SelectedTrackDefaultBehaviour = behaviours.SelectedTrackDefaultBehaviour;
-
-                foreach (AudioBehaviourTrack item in preset.AudioTrackBehaviours.BehaviourTracks)
+                this.audioBehaviours.AllowedPassthruOptions = behaviours.AllowedPassthruOptions;
+             
+                foreach (AudioBehaviourTrack item in behaviours.BehaviourTracks)
                 {
                     this.BehaviourTracks.Add(new AudioBehaviourTrack(item));
                 }
 
                 this.NotifyOfPropertyChange(() => this.BehaviourTracks);
-                
-                foreach (string selectedItem in behaviours.SelectedLangauges)
+
+                foreach (string selectedItem in behaviours.SelectedLanguages)
                 {
                     this.AvailableLanguages.Remove(selectedItem);
-                    this.AudioBehaviours.SelectedLangauges.Add(selectedItem);
+                    this.AudioBehaviours.SelectedLanguages.Add(selectedItem);
                 }
             }
 
-            this.task.AllowedPassthruOptions = new AllowedPassthru(preset.Task.AllowedPassthruOptions);
+            this.CorrectAudioEncoders(this.OutputFormat);
 
             this.NotifyOfPropertyChange(() => this.AudioAllowMP2Pass);
             this.NotifyOfPropertyChange(() => this.AudioAllowMP3Pass);
@@ -525,23 +481,56 @@ namespace HandBrakeWPF.ViewModels
         /// <summary>
         /// The refresh task.
         /// </summary>
-        public void RefreshTask()
+        public void RefreshTask(OutputFormat outputFormat)
         {
-            this.NotifyOfPropertyChange(() => this.Task);
+            this.OutputFormat = outputFormat;
+            this.NotifyOfPropertyChange(() => this.AudioEncoders);
+            this.NotifyOfPropertyChange(() => this.OutputFormat);
+            this.CorrectAudioEncoders(this.OutputFormat);
+        }
 
-            if (this.Task.OutputFormat == OutputFormat.Mp4 && 
+        public void LaunchHelp()
+        {
+            Process.Start("explorer.exe", "https://handbrake.fr/docs/en/latest/advanced/audio-subtitle-defaults.html");
+        }
+
+        #endregion
+
+        public bool ShowWindow()
+        {
+            this.IsApplied = false;
+            this.windowManager.ShowDialogAsync(this);
+
+            return this.IsApplied;
+        }
+
+        public void Cancel()
+        {
+            this.IsApplied = false;
+        }
+
+        public void Save()
+        {
+            this.IsApplied = true;
+            this.TryCloseAsync(false);
+        }
+
+
+        private void CorrectAudioEncoders(OutputFormat outputFormat)
+        {
+            if (outputFormat == OutputFormat.Mp4 &&
                 (this.AudioEncoderFallback == AudioEncoder.ffflac || this.AudioEncoderFallback == AudioEncoder.ffflac24 || this.AudioEncoderFallback == AudioEncoder.Vorbis || this.AudioEncoderFallback == AudioEncoder.Opus))
             {
-                    this.AudioEncoderFallback = AudioEncoder.ffaac;
+                this.AudioEncoderFallback = AudioEncoder.ffaac;
             }
 
-            if (this.Task.OutputFormat == OutputFormat.WebM &&
+            if (outputFormat == OutputFormat.WebM &&
                 (this.AudioEncoderFallback != AudioEncoder.Opus && this.AudioEncoderFallback != AudioEncoder.Vorbis))
             {
                 this.AudioEncoderFallback = AudioEncoder.Vorbis;
             }
-            
-            if (this.Task.OutputFormat == OutputFormat.Mp4)
+
+            if (outputFormat == OutputFormat.Mp4)
             {
                 foreach (AudioBehaviourTrack track in this.BehaviourTracks.Where(track => track.Encoder == AudioEncoder.ffflac || track.Encoder == AudioEncoder.ffflac24 || track.Encoder == AudioEncoder.Opus || track.Encoder == AudioEncoder.Vorbis))
                 {
@@ -549,7 +538,7 @@ namespace HandBrakeWPF.ViewModels
                 }
             }
 
-            if (this.Task.OutputFormat == OutputFormat.WebM)
+            if (outputFormat == OutputFormat.WebM)
             {
                 foreach (AudioBehaviourTrack track in this.BehaviourTracks.Where(track => track.Encoder != AudioEncoder.Vorbis && track.Encoder != AudioEncoder.Opus))
                 {
@@ -557,12 +546,5 @@ namespace HandBrakeWPF.ViewModels
                 }
             }
         }
-
-        public void LaunchHelp()
-        {
-            Process.Start("https://handbrake.fr/docs/en/latest/advanced/audio-subtitle-defaults.html");
-        }
-        
-        #endregion
     }
 }

@@ -14,8 +14,6 @@ For information on downloading, building/installing, and using HandBrake, see th
 
 Visit the [HandBrake Community Forums](https://forum.handbrake.fr/).
 
-Chat on [#handbrake on Freenode IRC](https://webchat.freenode.net/?channels=handbrake) (irc://irc.freenode.net/#handbrake).
-
 For information on HandBrake's community support channels, please see [Community Support](https://handbrake.fr/docs/en/latest/help/community-support.html).
 
 Our [community rules](https://forum.handbrake.fr/app.php/rules) and [code of conduct](https://github.com/HandBrake/HandBrake/blob/master/CODE_OF_CONDUCT.md) apply to both our site and GitHub.
@@ -31,7 +29,7 @@ Please read our [guide to contributing](https://handbrake.fr/docs/en/latest/cont
 
 We are now accepting translations via  [Transifex](https://www.transifex.com/HandBrakeProject/public) 
 
-Please read our [Translations Guide](https://github.com/HandBrake/HandBrake/blob/master/CODE_OF_CONDUCT.md) and follow the instructions if you are interested in joining the translation effort.
+Please read our [Translations Guide](https://github.com/HandBrake/HandBrake/blob/master/TRANSLATION.markdown) and follow the instructions if you are interested in joining the translation effort.
 
 
 ## Additional Information
@@ -39,4 +37,9 @@ Please read our [Translations Guide](https://github.com/HandBrake/HandBrake/blob
 [Authors](AUTHORS.markdown)  
 [License](LICENSE)  
 [News](NEWS.markdown)  
-[Thanks](THANKS.markdown)
+
+## Special Thanks
+
+<a href="https://www.macstadium.com/"><img width="200" alt="MacStadium" src="https://uploads-ssl.webflow.com/5ac3c046c82724970fc60918/5c019d917bba312af7553b49_MacStadium-developerlogo.png"></a>
+
+and to many others who have contributed! [Thanks](THANKS.markdown)

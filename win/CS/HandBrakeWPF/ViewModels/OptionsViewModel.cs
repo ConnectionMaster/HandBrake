@@ -15,17 +15,19 @@ namespace HandBrakeWPF.ViewModels
     using System.Globalization;
     using System.IO;
     using System.Linq;
+    using System.Threading;
+    using System.Threading.Tasks;
     using System.Windows;
     using System.Windows.Media;
 
     using Caliburn.Micro;
 
     using HandBrake.Interop.Interop;
-    using HandBrake.Interop.Model;
     using HandBrake.Interop.Utilities;
 
     using HandBrakeWPF.Model;
     using HandBrakeWPF.Model.Options;
+    using HandBrakeWPF.Model.Video;
     using HandBrakeWPF.Properties;
     using HandBrakeWPF.Services;
     using HandBrakeWPF.Services.Interfaces;
@@ -37,7 +39,6 @@ namespace HandBrakeWPF.ViewModels
     using Ookii.Dialogs.Wpf;
 
     using Execute = Caliburn.Micro.Execute;
-    using SystemInfo = HandBrake.Interop.Utilities.SystemInfo;
 
     public class OptionsViewModel : ViewModelBase, IOptionsViewModel
     {
@@ -52,10 +53,10 @@ namespace HandBrakeWPF.ViewModels
         private bool changeToTitleCase;
         private bool checkForUpdates;
         private UpdateCheck checkForUpdatesFrequency;
-        private bool clearOldOlgs;
+        private bool clearOldLogs;
         private BindingList<string> constantQualityGranularity = new BindingList<string>();
         private bool copyLogToEncodeDirectory;
-        private bool copyLogToSepcficedLocation;
+        private bool copyLogToSpecifiedLocation;
         private bool disableLibdvdNav;
         private string logDirectory;
         private BindingList<int> logVerbosityOptions = new BindingList<int>();
@@ -64,7 +65,7 @@ namespace HandBrakeWPF.ViewModels
         private bool preventSleep;
         private BindingList<int> previewPicturesToScan = new BindingList<int>();
         private bool removeUnderscores;
-        private string selectedGranulairty;
+        private string selectedGranularity;
         private Mp4Behaviour selectedMp4Extension;
         private int selectedPreviewCount;
         private ProcessPriority selectedPriority;
@@ -102,7 +103,7 @@ namespace HandBrakeWPF.ViewModels
         private string prePostFilenameText;
         private bool showPrePostFilenameBox;
         private bool whenDonePerformActionImmediately;
-        private bool useDarkTheme;
+        private DarkThemeMode darkThemeMode;
         private bool alwaysUseDefaultPath;
         private bool pauseOnLowBattery;
         private int lowBatteryLevel;
@@ -139,9 +140,7 @@ namespace HandBrakeWPF.ViewModels
 
         public IAboutViewModel AboutViewModel { get; set; }
 
-        public bool IsUWP { get; } = UwpDetect.IsUWP();
-
-        public bool IsNightly { get; } = VersionHelper.IsNightly();
+        public bool IsNightly { get; } = HandBrakeVersionHelper.IsNightly();
 
         public bool IsWindows10 => HandBrakeWPF.Utilities.SystemInfo.IsWindows10();
 
@@ -149,7 +148,7 @@ namespace HandBrakeWPF.ViewModels
 
         /* General */
 
-        public BindingList<InterfaceLanguage> InterfaceLanguages { get; } = new BindingList<InterfaceLanguage>(InterfaceLanguageUtilities.GetUserInterfaceLangauges());
+        public BindingList<InterfaceLanguage> InterfaceLanguages { get; } = new BindingList<InterfaceLanguage>(InterfaceLanguageUtilities.GetUserInterfaceLanguages());
 
         public InterfaceLanguage SelectedLanguage
         {
@@ -172,6 +171,8 @@ namespace HandBrakeWPF.ViewModels
                 this.NotifyOfPropertyChange(() => this.CheckForUpdates);
             }
         }
+
+        public bool CheckForUpdatesAllowed { get; set; }
 
         public bool ResetWhenDoneAction
         {
@@ -344,14 +345,16 @@ namespace HandBrakeWPF.ViewModels
             }
         }
 
-        public bool UseDarkTheme
+        public BindingList<DarkThemeMode> DarkThemeModes { get; } = new BindingList<DarkThemeMode>(EnumHelper<DarkThemeMode>.GetEnumList().ToList());
+
+        public DarkThemeMode DarkThemeMode
         {
-            get => this.useDarkTheme;
+            get => this.darkThemeMode;
             set
             {
-                if (value == this.useDarkTheme) return;
-                this.useDarkTheme = value;
-                this.NotifyOfPropertyChange(() => this.UseDarkTheme);
+                if (value == this.darkThemeMode) return;
+                this.darkThemeMode = value;
+                this.NotifyOfPropertyChange(() => this.DarkThemeMode);
             }
         }
 
@@ -363,8 +366,11 @@ namespace HandBrakeWPF.ViewModels
 
             set
             {
-                this.autoNameDefaultPath = value;
-                this.NotifyOfPropertyChange(() => this.AutoNameDefaultPath);
+                if (this.IsAutonamePathValid(value))
+                {
+                    this.autoNameDefaultPath = value;
+                    this.NotifyOfPropertyChange(() => this.AutoNameDefaultPath);
+                }
             }
         }
 
@@ -510,8 +516,6 @@ namespace HandBrakeWPF.ViewModels
             }
         }
 
-        public bool PassthruMetadata { get; set; }
-
         /* Preview */
 
         public string VLCPath
@@ -539,25 +543,25 @@ namespace HandBrakeWPF.ViewModels
             }
         }
 
-        public bool CopyLogToSepcficedLocation
+        public bool CopyLogToSpecifiedLocation
         {
-            get => this.copyLogToSepcficedLocation;
+            get => this.copyLogToSpecifiedLocation;
 
             set
             {
-                this.copyLogToSepcficedLocation = value;
-                this.NotifyOfPropertyChange(() => this.CopyLogToSepcficedLocation);
+                this.copyLogToSpecifiedLocation = value;
+                this.NotifyOfPropertyChange(() => this.CopyLogToSpecifiedLocation);
             }
         }
 
-        public bool ClearOldOlgs
+        public bool ClearOldLogs
         {
-            get => this.clearOldOlgs;
+            get => this.clearOldLogs;
 
             set
             {
-                this.clearOldOlgs = value;
-                this.NotifyOfPropertyChange(() => this.ClearOldOlgs);
+                this.clearOldLogs = value;
+                this.NotifyOfPropertyChange(() => this.ClearOldLogs);
             }
         }
 
@@ -607,14 +611,14 @@ namespace HandBrakeWPF.ViewModels
 
         public BindingList<ProcessPriority> PriorityLevelOptions { get; } = new BindingList<ProcessPriority>(EnumHelper<ProcessPriority>.GetEnumList().ToList());
 
-        public string SelectedGranulairty
+        public string SelectedGranularity
         {
-            get => this.selectedGranulairty;
+            get => this.selectedGranularity;
 
             set
             {
-                this.selectedGranulairty = value;
-                this.NotifyOfPropertyChange(() => this.SelectedGranulairty);
+                this.selectedGranularity = value;
+                this.NotifyOfPropertyChange(() => this.SelectedGranularity);
             }
         }
 
@@ -853,11 +857,11 @@ namespace HandBrakeWPF.ViewModels
 
         public VideoScaler SelectedScalingMode { get; set; }
 
-        public bool IsQuickSyncAvailable { get; } = SystemInfo.IsQsvAvailable;
+        public bool IsQuickSyncAvailable { get; } = HandBrakeHardwareEncoderHelper.IsQsvAvailable;
 
-        public bool IsVceAvailable { get; } = SystemInfo.IsVceH264Available;
+        public bool IsVceAvailable { get; } = HandBrakeHardwareEncoderHelper.IsVceH264Available;
 
-        public bool IsNvencAvailable { get; } = SystemInfo.IsNVEncH264Available;
+        public bool IsNvencAvailable { get; } = HandBrakeHardwareEncoderHelper.IsNVEncH264Available;
 
         public bool IsUseQsvDecAvailable
         {
@@ -880,10 +884,14 @@ namespace HandBrakeWPF.ViewModels
 
         public bool IsHardwareFallbackMode => HandBrakeUtils.IsInitNoHardware();
 
+        public bool IsSafeMode => HandBrakeHardwareEncoderHelper.IsSafeMode;
+
+        public bool IsHardwareOptionsVisible => !IsSafeMode && !IsHardwareFallbackMode;
+
 
         /* About HandBrake */
 
-        public string Version { get; } = string.Format("{0}", VersionHelper.GetVersion());
+        public string Version { get; } = string.Format("{0}", HandBrakeVersionHelper.GetVersion());
 
         public string UpdateMessage
         {
@@ -969,7 +977,7 @@ namespace HandBrakeWPF.ViewModels
         }
 
         public bool IsSimultaneousEncodesSupported => Utilities.SystemInfo.GetCpuCoreCount >= 4;
-
+        
         #region Public Methods
 
         public void Close()
@@ -1098,13 +1106,20 @@ namespace HandBrakeWPF.ViewModels
             string culture = this.userSettingService.GetUserSetting<string>(UserSettingConstants.UiLanguage);
             this.SelectedLanguage = InterfaceLanguageUtilities.FindInterfaceLanguage(culture);
 
+            this.CheckForUpdatesAllowed = true;
             this.CheckForUpdates = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.UpdateStatus);
             this.CheckForUpdatesFrequency = (UpdateCheck)this.userSettingService.GetUserSetting<int>(UserSettingConstants.DaysBetweenUpdateCheck);
+            if (Portable.IsPortable() && !Portable.IsUpdateCheckEnabled())
+            {
+                this.CheckForUpdates = false;
+                this.CheckForUpdatesAllowed = false;
+            }
+
             this.ShowStatusInTitleBar = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.ShowStatusInTitleBar);
             this.ShowPreviewOnSummaryTab = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.ShowPreviewOnSummaryTab);
             this.ShowAddAllToQueue = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.ShowAddAllToQueue);
             this.ShowAddSelectionToQueue = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.ShowAddSelectionToQueue);
-            this.UseDarkTheme = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.UseDarkTheme);
+            this.DarkThemeMode = (DarkThemeMode)this.userSettingService.GetUserSetting<int>(UserSettingConstants.DarkThemeMode);
 
             // #############################
             // When Done
@@ -1166,8 +1181,6 @@ namespace HandBrakeWPF.ViewModels
 
             this.AlwaysUseDefaultPath = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.AlwaysUseDefaultPath);
 
-            this.PassthruMetadata = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.MetadataPassthru);
-
             // #############################
             // Picture Tab
             // #############################
@@ -1205,12 +1218,12 @@ namespace HandBrakeWPF.ViewModels
 
             // Logs
             this.CopyLogToEncodeDirectory = userSettingService.GetUserSetting<bool>(UserSettingConstants.SaveLogWithVideo);
-            this.CopyLogToSepcficedLocation = userSettingService.GetUserSetting<bool>(UserSettingConstants.SaveLogToCopyDirectory);
+            this.CopyLogToSpecifiedLocation = userSettingService.GetUserSetting<bool>(UserSettingConstants.SaveLogToCopyDirectory);
 
             // The saved log path
             this.LogDirectory = userSettingService.GetUserSetting<string>(UserSettingConstants.SaveLogCopyDirectory) ?? string.Empty;
 
-            this.ClearOldOlgs = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.ClearOldLogs);
+            this.ClearOldLogs = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.ClearOldLogs);
 
             // #############################
             // Advanced
@@ -1240,7 +1253,7 @@ namespace HandBrakeWPF.ViewModels
             this.ConstantQualityGranularity.Add("1.00");
             this.ConstantQualityGranularity.Add("0.50");
             this.ConstantQualityGranularity.Add("0.25");
-            this.SelectedGranulairty = userSettingService.GetUserSetting<double>(UserSettingConstants.X264Step).ToString("0.00", CultureInfo.InvariantCulture);
+            this.SelectedGranularity = userSettingService.GetUserSetting<double>(UserSettingConstants.X264Step).ToString("0.00", CultureInfo.InvariantCulture);
 
             // Min Title Length
             this.MinLength = this.userSettingService.GetUserSetting<int>(UserSettingConstants.MinScanDuration);
@@ -1288,10 +1301,10 @@ namespace HandBrakeWPF.ViewModels
             }
         }
 
-        protected override void OnActivate()
+        protected override Task OnActivateAsync(CancellationToken cancellationToken)
         {
             this.OnLoad();
-            base.OnActivate();
+            return base.OnActivateAsync(cancellationToken);
         }
 
         private void Save()
@@ -1304,7 +1317,7 @@ namespace HandBrakeWPF.ViewModels
             this.userSettingService.SetUserSetting(UserSettingConstants.SendFileToArgs, this.Arguments);
             this.userSettingService.SetUserSetting(UserSettingConstants.ShowStatusInTitleBar, this.ShowStatusInTitleBar);
             this.userSettingService.SetUserSetting(UserSettingConstants.ShowPreviewOnSummaryTab, this.ShowPreviewOnSummaryTab);
-            this.userSettingService.SetUserSetting(UserSettingConstants.UseDarkTheme, this.UseDarkTheme);
+            this.userSettingService.SetUserSetting(UserSettingConstants.DarkThemeMode, this.DarkThemeMode);
             this.userSettingService.SetUserSetting(UserSettingConstants.UiLanguage, this.SelectedLanguage?.Culture);
             this.userSettingService.SetUserSetting(UserSettingConstants.ShowAddAllToQueue, this.ShowAddAllToQueue);
             this.userSettingService.SetUserSetting(UserSettingConstants.ShowAddSelectionToQueue, this.ShowAddSelectionToQueue);
@@ -1329,7 +1342,6 @@ namespace HandBrakeWPF.ViewModels
             this.userSettingService.SetUserSetting(UserSettingConstants.AutonameFileCollisionBehaviour, this.SelectedCollisionBehaviour);
             this.userSettingService.SetUserSetting(UserSettingConstants.AutonameFilePrePostString, this.PrePostFilenameText);
             this.userSettingService.SetUserSetting(UserSettingConstants.AlwaysUseDefaultPath, this.AlwaysUseDefaultPath);
-            this.userSettingService.SetUserSetting(UserSettingConstants.MetadataPassthru, this.PassthruMetadata);
 
             /* Previews */
             this.userSettingService.SetUserSetting(UserSettingConstants.MediaPlayerPath, this.VLCPath);
@@ -1351,15 +1363,15 @@ namespace HandBrakeWPF.ViewModels
             this.userSettingService.SetUserSetting(UserSettingConstants.PauseQueueOnLowDiskspaceLevel, this.PauseOnLowDiskspaceLevel);
             this.userSettingService.SetUserSetting(UserSettingConstants.Verbosity, this.SelectedVerbosity);
             this.userSettingService.SetUserSetting(UserSettingConstants.SaveLogWithVideo, this.CopyLogToEncodeDirectory);
-            this.userSettingService.SetUserSetting(UserSettingConstants.SaveLogToCopyDirectory, this.CopyLogToSepcficedLocation);
+            this.userSettingService.SetUserSetting(UserSettingConstants.SaveLogToCopyDirectory, this.CopyLogToSpecifiedLocation);
             this.userSettingService.SetUserSetting(UserSettingConstants.SaveLogCopyDirectory, this.LogDirectory);
-            this.userSettingService.SetUserSetting(UserSettingConstants.ClearOldLogs, this.ClearOldOlgs);
+            this.userSettingService.SetUserSetting(UserSettingConstants.ClearOldLogs, this.ClearOldLogs);
 
             /* Advanced */
             this.userSettingService.SetUserSetting(UserSettingConstants.MainWindowMinimize, this.MinimiseToTray);
             this.userSettingService.SetUserSetting(UserSettingConstants.ClearCompletedFromQueue, this.ClearQueueOnEncodeCompleted);
             this.userSettingService.SetUserSetting(UserSettingConstants.PreviewScanCount, this.SelectedPreviewCount);
-            this.userSettingService.SetUserSetting(UserSettingConstants.X264Step, double.Parse(this.SelectedGranulairty, CultureInfo.InvariantCulture));
+            this.userSettingService.SetUserSetting(UserSettingConstants.X264Step, double.Parse(this.SelectedGranularity, CultureInfo.InvariantCulture));
 
             int value;
             if (int.TryParse(this.MinLength.ToString(CultureInfo.InvariantCulture), out value))
@@ -1452,6 +1464,32 @@ namespace HandBrakeWPF.ViewModels
                 }
             }
 
+            return true;
+        }
+
+        private bool IsAutonamePathValid(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return true;
+            }
+
+            if (path.Contains(Constants.SourcePath) && path.Contains(Constants.SourceFolderName))
+            {
+                int indexOfSourcePath = path.IndexOf(Constants.SourcePath, StringComparison.Ordinal);
+                int indexOfSourceFolderName = path.IndexOf(Constants.SourceFolderName, StringComparison.Ordinal);
+
+                if (indexOfSourceFolderName < indexOfSourcePath)
+                {
+                    this.errorService.ShowMessageBox(
+                        string.Format(Resources.OptionsViewModel_InvalidAutonamePath, Constants.SourceFolderName, Constants.SourcePath),
+                        Resources.Error,
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    return false;
+                }
+            }
+            
             return true;
         }
     }

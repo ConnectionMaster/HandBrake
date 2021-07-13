@@ -16,12 +16,13 @@ namespace HandBrakeWPF.Services.Encode.Factories
 
     using HandBrake.Interop.Interop;
     using HandBrake.Interop.Interop.HbLib;
+    using HandBrake.Interop.Interop.Interfaces.Model;
+    using HandBrake.Interop.Interop.Interfaces.Model.Encoders;
     using HandBrake.Interop.Interop.Json.Encode;
     using HandBrake.Interop.Interop.Json.Shared;
-    using HandBrake.Interop.Interop.Model.Encoding;
-    using HandBrake.Interop.Model;
 
     using HandBrakeWPF.Helpers;
+    using HandBrakeWPF.Model.Filters;
     using HandBrakeWPF.Services.Interfaces;
     using HandBrakeWPF.Utilities;
 
@@ -35,8 +36,9 @@ namespace HandBrakeWPF.Services.Encode.Factories
     using PointToPointMode = Model.Models.PointToPointMode;
     using Subtitle = HandBrake.Interop.Interop.Json.Encode.Subtitles;
     using SubtitleTrack = Model.Models.SubtitleTrack;
-    using SystemInfo = HandBrake.Interop.Utilities.SystemInfo;
     using Validate = Helpers.Validate;
+    using VideoEncoder = HandBrakeWPF.Model.Video.VideoEncoder;
+    using VideoEncodeRateType = HandBrakeWPF.Model.Video.VideoEncodeRateType;
 
     /// <summary>
     /// This factory takes the internal EncodeJob object and turns it into a set of JSON models
@@ -243,7 +245,7 @@ namespace HandBrakeWPF.Services.Encode.Factories
                 video.Turbo = job.TurboFirstPass;
             }
 
-            video.QSV.Decode = SystemInfo.IsQsvAvailable && configuration.EnableQuickSyncDecoding;
+            video.QSV.Decode = HandBrakeHardwareEncoderHelper.IsQsvAvailable && configuration.EnableQuickSyncDecoding;
 
             // The use of the QSV decoder is configurable for non QSV encoders.
             if (video.QSV.Decode && job.VideoEncoder != VideoEncoder.QuickSync && job.VideoEncoder != VideoEncoder.QuickSyncH265 && job.VideoEncoder != VideoEncoder.QuickSyncH26510b)
@@ -253,7 +255,7 @@ namespace HandBrakeWPF.Services.Encode.Factories
             
             video.Options = job.ExtraAdvancedArguments;
 
-            if (SystemInfo.QsvHardwareGeneration > 6 && (job.VideoEncoder == VideoEncoder.QuickSync || job.VideoEncoder == VideoEncoder.QuickSyncH265 || job.VideoEncoder == VideoEncoder.QuickSyncH26510b))
+            if (HandBrakeHardwareEncoderHelper.IsQsvAvailable && (HandBrakeHardwareEncoderHelper.QsvHardwareGeneration > 6) && (job.VideoEncoder == VideoEncoder.QuickSync || job.VideoEncoder == VideoEncoder.QuickSyncH265 || job.VideoEncoder == VideoEncoder.QuickSyncH26510b))
             {
                 if (configuration.EnableQsvLowPower && !video.Options.Contains("lowpower"))
                 {
@@ -273,22 +275,22 @@ namespace HandBrakeWPF.Services.Encode.Factories
             Audio audio = new Audio();
 
             List<string> copyMaskList = new List<string>();
-            if (job.AllowedPassthruOptions.AudioAllowAACPass) copyMaskList.Add(EnumHelper<AudioEncoder>.GetShortName(AudioEncoder.AacPassthru));
-            if (job.AllowedPassthruOptions.AudioAllowAC3Pass) copyMaskList.Add(EnumHelper<AudioEncoder>.GetShortName(AudioEncoder.Ac3Passthrough));
-            if (job.AllowedPassthruOptions.AudioAllowDTSHDPass) copyMaskList.Add(EnumHelper<AudioEncoder>.GetShortName(AudioEncoder.DtsHDPassthrough));
-            if (job.AllowedPassthruOptions.AudioAllowDTSPass) copyMaskList.Add(EnumHelper<AudioEncoder>.GetShortName(AudioEncoder.DtsPassthrough));
-            if (job.AllowedPassthruOptions.AudioAllowEAC3Pass) copyMaskList.Add(EnumHelper<AudioEncoder>.GetShortName(AudioEncoder.EAc3Passthrough));
-            if (job.AllowedPassthruOptions.AudioAllowFlacPass) copyMaskList.Add(EnumHelper<AudioEncoder>.GetShortName(AudioEncoder.FlacPassthru));
-            if (job.AllowedPassthruOptions.AudioAllowMP3Pass) copyMaskList.Add(EnumHelper<AudioEncoder>.GetShortName(AudioEncoder.Mp3Passthru));
-            if (job.AllowedPassthruOptions.AudioAllowTrueHDPass) copyMaskList.Add(EnumHelper<AudioEncoder>.GetShortName(AudioEncoder.TrueHDPassthrough));
-            if (job.AllowedPassthruOptions.AudioAllowMP2Pass) copyMaskList.Add(EnumHelper<AudioEncoder>.GetShortName(AudioEncoder.Mp2Passthru));
+            if (job.AudioPassthruOptions.AudioAllowAACPass) copyMaskList.Add(EnumHelper<AudioEncoder>.GetShortName(AudioEncoder.AacPassthru));
+            if (job.AudioPassthruOptions.AudioAllowAC3Pass) copyMaskList.Add(EnumHelper<AudioEncoder>.GetShortName(AudioEncoder.Ac3Passthrough));
+            if (job.AudioPassthruOptions.AudioAllowDTSHDPass) copyMaskList.Add(EnumHelper<AudioEncoder>.GetShortName(AudioEncoder.DtsHDPassthrough));
+            if (job.AudioPassthruOptions.AudioAllowDTSPass) copyMaskList.Add(EnumHelper<AudioEncoder>.GetShortName(AudioEncoder.DtsPassthrough));
+            if (job.AudioPassthruOptions.AudioAllowEAC3Pass) copyMaskList.Add(EnumHelper<AudioEncoder>.GetShortName(AudioEncoder.EAc3Passthrough));
+            if (job.AudioPassthruOptions.AudioAllowFlacPass) copyMaskList.Add(EnumHelper<AudioEncoder>.GetShortName(AudioEncoder.FlacPassthru));
+            if (job.AudioPassthruOptions.AudioAllowMP3Pass) copyMaskList.Add(EnumHelper<AudioEncoder>.GetShortName(AudioEncoder.Mp3Passthru));
+            if (job.AudioPassthruOptions.AudioAllowTrueHDPass) copyMaskList.Add(EnumHelper<AudioEncoder>.GetShortName(AudioEncoder.TrueHDPassthrough));
+            if (job.AudioPassthruOptions.AudioAllowMP2Pass) copyMaskList.Add(EnumHelper<AudioEncoder>.GetShortName(AudioEncoder.Mp2Passthru));
 
             audio.CopyMask = copyMaskList.ToArray();
 
-            HBAudioEncoder audioEncoder = HandBrakeEncoderHelpers.GetAudioEncoder(EnumHelper<AudioEncoder>.GetShortName(job.AllowedPassthruOptions.AudioEncoderFallback));
+            HBAudioEncoder audioEncoder = HandBrakeEncoderHelpers.GetAudioEncoder(EnumHelper<AudioEncoder>.GetShortName(job.AudioPassthruOptions.AudioEncoderFallback));
             audio.FallbackEncoder = audioEncoder?.ShortName;
 
-            Validate.NotNull(audio.FallbackEncoder, string.Format("Unrecognized audio encoder: {0} \n", job.AllowedPassthruOptions.AudioEncoderFallback));
+            Validate.NotNull(audio.FallbackEncoder, string.Format("Unrecognized audio encoder: {0} \n", job.AudioPassthruOptions.AudioEncoderFallback));
 
             audio.AudioList = new List<HandBrake.Interop.Interop.Json.Encode.AudioTrack>();
             foreach (AudioTrack item in job.AudioTracks)
@@ -299,7 +301,7 @@ namespace HandBrakeWPF.Services.Encode.Factories
                 if (item.IsPassthru && (item.ScannedTrack.Codec & encoder.Id) == 0)
                 {
                     // We have an unsupported passthru. Rather than let libhb drop the track, switch it to the fallback.
-                    encoder = HandBrakeEncoderHelpers.GetAudioEncoder(EnumHelper<AudioEncoder>.GetShortName(job.AllowedPassthruOptions.AudioEncoderFallback));
+                    encoder = HandBrakeEncoderHelpers.GetAudioEncoder(EnumHelper<AudioEncoder>.GetShortName(job.AudioPassthruOptions.AudioEncoderFallback));
                 }
 
                 HBMixdown mixdown = HandBrakeEncoderHelpers.GetMixdown(item.MixDown);
@@ -470,8 +472,18 @@ namespace HandBrakeWPF.Services.Encode.Factories
 
             // Padding Filter
             if (job.Padding.Enabled)
-            { 
-                string padSettings = string.Format("width={0}:height={1}:color={2}:x={3}:y={4}", job.Width, job.Height, job.Padding.Color, job.Padding.X, job.Padding.Y);
+            {
+                // Calculate the new Width / Height
+                int? width = job.Width;
+                int? height = job.Height;
+                if (job.Padding.Enabled)
+                {
+                    width = width + job.Padding.W;
+                    height = height + job.Padding.H;
+                }
+
+                // Setup the filter.
+                string padSettings = string.Format("width={0}:height={1}:color={2}:x={3}:y={4}", width, height, job.Padding.Color, job.Padding.X, job.Padding.Y);
                 string unparsedPadSettingsJson = HandBrakeFilterHelpers.GenerateFilterSettingJson((int)hb_filter_ids.HB_FILTER_PAD, null, null, padSettings);
                 if (!string.IsNullOrEmpty(unparsedPadSettingsJson))
                 {
@@ -485,6 +497,32 @@ namespace HandBrakeWPF.Services.Encode.Factories
                     filter.FilterList.Add(padding);
                 }
             }
+
+            // Colourspace
+            if (job.Colourspace != null && job.Colourspace.Key != "off")
+            {
+                string unparsedJson = HandBrakeFilterHelpers.GenerateFilterSettingJson((int)hb_filter_ids.HB_FILTER_COLORSPACE, job.Colourspace.Key, null, job.CustomColourspace);
+                if (!string.IsNullOrEmpty(unparsedJson))
+                {
+                    JsonDocument settings = JsonDocument.Parse(unparsedJson);
+
+                    Filter filterItem = new Filter { ID = (int)hb_filter_ids.HB_FILTER_COLORSPACE, Settings = settings };
+                    filter.FilterList.Add(filterItem);
+                }
+            }
+
+            if (job.ChromaSmooth != null && job.ChromaSmooth.Key != "off")
+            {
+                string unparsedJson = HandBrakeFilterHelpers.GenerateFilterSettingJson((int)hb_filter_ids.HB_FILTER_CHROMA_SMOOTH, job.ChromaSmooth.Key, job.ChromaSmoothTune?.Key, job.CustomChromaSmooth);
+                if (!string.IsNullOrEmpty(unparsedJson))
+                {
+                    JsonDocument settings = JsonDocument.Parse(unparsedJson);
+
+                    Filter filterItem = new Filter { ID = (int)hb_filter_ids.HB_FILTER_CHROMA_SMOOTH, Settings = settings };
+                    filter.FilterList.Add(filterItem);
+                }
+            }
+
 
             // Grayscale
             if (job.Grayscale)
@@ -540,28 +578,25 @@ namespace HandBrakeWPF.Services.Encode.Factories
 
         private Metadata CreateMetadata(EncodeTask job)
         {
-            if (this.userSettingService.GetUserSetting<bool>(UserSettingConstants.MetadataPassthru))
+            if (job.MetaData != null && job.MetaData.PassthruMetadataEnabled)
             {
-                if (job.MetaData != null && job.MetaData.IsMetadataSet)
-                {
-                    Metadata metaData = new Metadata();
-                    metaData.Artist = job.MetaData.Artist;
-                    metaData.Album = job.MetaData.Album;
-                    metaData.AlbumArtist = job.MetaData.AlbumArtist;
-                    metaData.Comment = job.MetaData.Comment;
-                    metaData.Composer = job.MetaData.Composer;
-                    metaData.Description = job.MetaData.Description;
-                    metaData.Genre = job.MetaData.Genre;
-                    metaData.LongDescription = job.MetaData.LongDescription;
-                    metaData.Name = job.MetaData.Name;
-                    metaData.ReleaseDate = job.MetaData.ReleaseDate;
-                    return metaData;
-                }
-
-                return null; // Null will allow Libhb to find and passthru any metadata it supports.
+                Metadata metaData = new Metadata
+                                    {
+                                        Artist = job.MetaData.Artist,
+                                        Album = job.MetaData.Album,
+                                        AlbumArtist = job.MetaData.AlbumArtist,
+                                        Comment = job.MetaData.Comment,
+                                        Composer = job.MetaData.Composer,
+                                        Description = job.MetaData.Description,
+                                        Genre = job.MetaData.Genre,
+                                        LongDescription = job.MetaData.LongDescription,
+                                        Name = job.MetaData.Name,
+                                        ReleaseDate = job.MetaData.ReleaseDate
+                                    };
+                return metaData;
             }
 
-            return new Metadata(); // Empty Metatdata will not pass through to the destination.  
+            return new Metadata(); // Empty Metadata will not pass through to the destination.  
         }
     }
 }

@@ -12,6 +12,7 @@ namespace HandBrakeWPF.ViewModels
     using System.Collections.Generic;
     using System.ComponentModel;
     using System.Linq;
+    using System.Runtime.CompilerServices;
     using System.Windows;
 
     using Caliburn.Micro;
@@ -52,15 +53,17 @@ namespace HandBrakeWPF.ViewModels
             this.errorService = errorService;
             this.windowManager = windowManager;
             this.Title = Resources.AddPresetView_AddPreset;
-            this.Preset = new Preset { IsBuildIn = false, IsDefault = false, Category = PresetService.UserPresetCatgoryName };
+            this.Preset = new Preset { IsBuildIn = false, IsDefault = false, Category = PresetService.UserPresetCategoryName };
             this.PresetCategories = presetService.GetPresetCategories(true).Union(new List<PresetDisplayCategory> { addNewCategory }).ToList();
-            this.SelectedPresetCategory = this.PresetCategories.FirstOrDefault(n => n.Category == PresetService.UserPresetCatgoryName);
+            this.SelectedPresetCategory = this.PresetCategories.FirstOrDefault(n => n.Category == PresetService.UserPresetCategoryName);
 
             this.CustomHeight = 0;
             this.CustomWidth = 0;
         }
 
         public Preset Preset { get; }
+
+        public string PresetName => this.Preset.Name;
 
         public bool ShowCustomInputs
         {
@@ -89,7 +92,7 @@ namespace HandBrakeWPF.ViewModels
                 }
                 else
                 {
-                    this.PresetCategory = PresetService.UserPresetCatgoryName;
+                    this.PresetCategory = PresetService.UserPresetCategoryName;
                 }
             }
         }
@@ -174,14 +177,14 @@ namespace HandBrakeWPF.ViewModels
         public void Setup(EncodeTask task, Title title, AudioBehaviours audioBehaviours, SubtitleBehaviours subtitleBehaviours)
         {
             this.Preset.Task = new EncodeTask(task);
-            this.Preset.AudioTrackBehaviours = audioBehaviours.Clone();
-            this.Preset.SubtitleTrackBehaviours = subtitleBehaviours.Clone();
+            this.Preset.AudioTrackBehaviours = new AudioBehaviours(audioBehaviours); 
+            this.Preset.SubtitleTrackBehaviours = new SubtitleBehaviours(subtitleBehaviours);
 
-            this.audioDefaultsViewModel = new AudioDefaultsViewModel(this.Preset.Task);
-            this.audioDefaultsViewModel.Setup(this.Preset, this.Preset.Task);
+            this.audioDefaultsViewModel = new AudioDefaultsViewModel(this.windowManager);
+            this.audioDefaultsViewModel.Setup(audioBehaviours, task.OutputFormat);
 
-            this.subtitlesDefaultsViewModel = new SubtitlesDefaultsViewModel();
-            this.subtitlesDefaultsViewModel.SetupLanguages(subtitleBehaviours);
+            this.subtitlesDefaultsViewModel = new SubtitlesDefaultsViewModel(this.windowManager);
+            this.subtitlesDefaultsViewModel.SetupPreset(subtitleBehaviours);
 
             // Resolution Limits
             this.CustomWidth = task.MaxWidth;
@@ -247,35 +250,32 @@ namespace HandBrakeWPF.ViewModels
 
         public void EditAudioDefaults()
         {
-            this.audioDefaultsViewModel.ResetApplied();
-            this.windowManager.ShowDialog(this.audioDefaultsViewModel);
+            this.audioDefaultsViewModel.ShowWindow();
+
             if (audioDefaultsViewModel.IsApplied)
             {
-                this.Preset.AudioTrackBehaviours = this.audioDefaultsViewModel.AudioBehaviours.Clone();
+                this.Preset.AudioTrackBehaviours = new AudioBehaviours(this.audioDefaultsViewModel.AudioBehaviours);
             }
         }
 
         public void EditSubtitleDefaults()
         {
-            this.subtitlesDefaultsViewModel.ResetApplied();
-            SubtitlesDefaultsView view = new SubtitlesDefaultsView();
-            view.DataContext = this.subtitlesDefaultsViewModel;
-            view.ShowDialog();
+            this.subtitlesDefaultsViewModel.ShowWindow();
 
             if (subtitlesDefaultsViewModel.IsApplied)
             {
-                this.Preset.SubtitleTrackBehaviours = this.subtitlesDefaultsViewModel.SubtitleBehaviours.Clone();
+                this.Preset.SubtitleTrackBehaviours = new SubtitleBehaviours(this.subtitlesDefaultsViewModel.SubtitleBehaviours);
             }
         }
 
         public void Cancel()
         {
-            this.Close();
+            this.TryCloseAsync(false);
         }
 
-        public void Close()
+        private void Close()
         {
-            this.TryClose();
+            this.TryCloseAsync(true);
         }
 
         private void SetSelectedPictureSettingsResLimitMode()

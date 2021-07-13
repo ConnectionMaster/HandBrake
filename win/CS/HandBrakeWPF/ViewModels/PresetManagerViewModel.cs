@@ -18,7 +18,9 @@ namespace HandBrakeWPF.ViewModels
     using Caliburn.Micro;
 
     using HandBrakeWPF.Factories;
+    using HandBrakeWPF.Model.Audio;
     using HandBrakeWPF.Model.Picture;
+    using HandBrakeWPF.Model.Subtitles;
     using HandBrakeWPF.Properties;
     using HandBrakeWPF.Services.Interfaces;
     using HandBrakeWPF.Services.Presets.Interfaces;
@@ -386,14 +388,13 @@ namespace HandBrakeWPF.ViewModels
                 return;
             }
 
-            IAudioDefaultsViewModel audioDefaultsViewModel = new AudioDefaultsViewModel(this.selectedPreset.Task);
-            audioDefaultsViewModel.ResetApplied();
-            audioDefaultsViewModel.Setup(this.selectedPreset, this.selectedPreset.Task);
+            IAudioDefaultsViewModel audioDefaultsViewModel = new AudioDefaultsViewModel(this.windowManager);
+            audioDefaultsViewModel.Setup(this.selectedPreset.AudioTrackBehaviours, this.selectedPreset.Task.OutputFormat);
+            audioDefaultsViewModel.ShowWindow();
 
-            this.windowManager.ShowDialog(audioDefaultsViewModel);
             if (audioDefaultsViewModel.IsApplied)
             {
-                this.SelectedPreset.AudioTrackBehaviours = audioDefaultsViewModel.AudioBehaviours.Clone();
+                this.SelectedPreset.AudioTrackBehaviours = new AudioBehaviours(audioDefaultsViewModel.AudioBehaviours);
             }
         }
 
@@ -404,15 +405,13 @@ namespace HandBrakeWPF.ViewModels
                 return;
             }
 
-            ISubtitlesDefaultsViewModel subtitlesDefaultsViewModel = new SubtitlesDefaultsViewModel();
-            subtitlesDefaultsViewModel.ResetApplied();
-            SubtitlesDefaultsView view = new SubtitlesDefaultsView();
-            view.DataContext = subtitlesDefaultsViewModel;
-            view.ShowDialog();
+            ISubtitlesDefaultsViewModel subtitlesDefaultsViewModel = new SubtitlesDefaultsViewModel(windowManager);
+            subtitlesDefaultsViewModel.SetupPreset(this.selectedPreset);
+            subtitlesDefaultsViewModel.ShowWindow();
 
             if (subtitlesDefaultsViewModel.IsApplied)
             {
-                this.SelectedPreset.SubtitleTrackBehaviours = subtitlesDefaultsViewModel.SubtitleBehaviours.Clone();
+                this.SelectedPreset.SubtitleTrackBehaviours = new SubtitleBehaviours(subtitlesDefaultsViewModel.SubtitleBehaviours);
             }
         }
 
@@ -438,7 +437,7 @@ namespace HandBrakeWPF.ViewModels
 
         public void LaunchHelp()
         {
-            Process.Start("https://handbrake.fr/docs/en/latest/advanced/custom-presets.html");
+            Process.Start("explorer.exe", "https://handbrake.fr/docs/en/latest/advanced/custom-presets.html");
         }
 
         private void SetDefaultPreset()

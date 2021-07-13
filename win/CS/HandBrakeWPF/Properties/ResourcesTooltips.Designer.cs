@@ -61,6 +61,24 @@ namespace HandBrakeWPF.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Chroma Smooth Filter.
+        /// </summary>
+        public static string FiltersView_ChromaSmooth {
+            get {
+                return ResourceManager.GetString("FiltersView_ChromaSmooth", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Colourspace Filter..
+        /// </summary>
+        public static string FiltersView_ColourSpace {
+            get {
+                return ResourceManager.GetString("FiltersView_ColourSpace", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Custom Denoise parameters.
         /// 
         ///NLMeans syntax: y-strength=y:y-origin-tune=y:y-patch-size=y:y-range=y:y-frame-count=y:y-prefilter=y:cb-strength=c:cb-origin-tune=c:cb-patch-size=c:cb-range=c:cb-frame-count=c:cb-prefilter=c:cr-strength=c:cr-origin-tune=c:cr-patch-size=c:cr-range=c:cr-frame-count=c:cr-prefilter=c:threads=t
@@ -574,6 +592,15 @@ namespace HandBrakeWPF.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to This field can accept RGB values such as: &quot;0xFF0000&quot; or colour names such as &quot;red&quot;. For a full list of named colours, see the padding filter documentation. .
+        /// </summary>
+        public static string PictureSettingsView_PaddingCustomColourTooltip {
+            get {
+                return ResourceManager.GetString("PictureSettingsView_PaddingCustomColourTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Pixel aspect defines the shape of the pixels.
         ///A 1:1 ratio defines a square pixel.  Other values define rectangular shapes.
         ///Players will scale the image in order to achieve the specified aspect..
@@ -627,6 +654,19 @@ namespace HandBrakeWPF.Properties {
         public static string SourceSelection_TitleSpecific {
             get {
                 return ResourceManager.GetString("SourceSelection_TitleSpecific", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Burn in subtitles to the video stream.
+        ///
+        ///Note, this will be automatically selected if the source subtitle track format is not supported in the output file type.
+        ///
+        ///For example, PGS subtitles are not supported in MP4.
+        /// </summary>
+        public static string SubtitlesView_BurnIn {
+            get {
+                return ResourceManager.GetString("SubtitlesView_BurnIn", resourceCulture);
             }
         }
         

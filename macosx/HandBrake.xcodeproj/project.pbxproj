@@ -179,6 +179,10 @@
 		A91CE2FE1C7DB99D0068F46F /* HBTreeNode.h in Headers */ = {isa = PBXBuildFile; fileRef = A9D488A31996270300E9B1BA /* HBTreeNode.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		A91D54871E378ABD006D0997 /* HBSecurityAccessToken.h in Headers */ = {isa = PBXBuildFile; fileRef = A91D54851E378ABD006D0997 /* HBSecurityAccessToken.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		A91D54881E378ABD006D0997 /* HBSecurityAccessToken.m in Sources */ = {isa = PBXBuildFile; fileRef = A91D54861E378ABD006D0997 /* HBSecurityAccessToken.m */; };
+		A91D84E426676647008987A0 /* HandBrakeXPCService1-InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A91D84E226676647008987A0 /* HandBrakeXPCService1-InfoPlist.strings */; };
+		A91D84E726676647008987A0 /* HandBrakeXPCService2-InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A91D84E526676647008987A0 /* HandBrakeXPCService2-InfoPlist.strings */; };
+		A91D84EA26676647008987A0 /* HandBrakeXPCService3-InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A91D84E826676647008987A0 /* HandBrakeXPCService3-InfoPlist.strings */; };
+		A91D84ED26676647008987A0 /* HandBrakeXPCService4-InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A91D84EB26676647008987A0 /* HandBrakeXPCService4-InfoPlist.strings */; };
 		A91F97351D7B2A4E00D82DCE /* HBAudioTransformers.h in Headers */ = {isa = PBXBuildFile; fileRef = A91F97331D7B2A4E00D82DCE /* HBAudioTransformers.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		A91F97361D7B2A4E00D82DCE /* HBAudioTransformers.m in Sources */ = {isa = PBXBuildFile; fileRef = A91F97341D7B2A4E00D82DCE /* HBAudioTransformers.m */; };
 		A92268781A6E555500A8D5C5 /* HBAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = A92268771A6E555500A8D5C5 /* HBAppDelegate.m */; };
@@ -259,6 +263,8 @@
 		A98C29C41977B10600AF5DED /* HBLanguagesSelection.m in Sources */ = {isa = PBXBuildFile; fileRef = A98C29C31977B10600AF5DED /* HBLanguagesSelection.m */; };
 		A9906B2C1A710920001D82D5 /* HBQueueController.m in Sources */ = {isa = PBXBuildFile; fileRef = A9906B2B1A710920001D82D5 /* HBQueueController.m */; };
 		A990C55322FF4FBA00E07CE2 /* HandBrakeKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9736F021C7DA5FE008F1D18 /* HandBrakeKit.framework */; };
+		A9935865256C346F00A6875E /* libzimg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A9935852256C346F00A6875E /* libzimg.a */; };
+		A9935866256C347800A6875E /* libzimg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A9935852256C346F00A6875E /* libzimg.a */; };
 		A99F40CF1B624E7E00750170 /* HBPictureViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A99F40CD1B624E7E00750170 /* HBPictureViewController.m */; };
 		A9A0CBE81CCEA3670045B3DF /* HBPlayerTrack.m in Sources */ = {isa = PBXBuildFile; fileRef = A9A0CBE61CCEA1D10045B3DF /* HBPlayerTrack.m */; };
 		A9A25D9C21182741005A8A0F /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9A25D9B21182741005A8A0F /* CoreMedia.framework */; };
@@ -293,6 +299,7 @@
 		A9ABD1A71E2A0F7500EC8B65 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9ABD1A51E2A0F0700EC8B65 /* CoreText.framework */; };
 		A9ABD1A91E2A0F8200EC8B65 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9ABD1A81E2A0F8200EC8B65 /* CoreGraphics.framework */; };
 		A9ABD1AA1E2A0F8F00EC8B65 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9ABD1A81E2A0F8200EC8B65 /* CoreGraphics.framework */; };
+		A9B304892671288D001FFEDE /* HBDirectUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = A9B304882671288D001FFEDE /* HBDirectUtilities.h */; };
 		A9B3B63922E2EA58001CEB9A /* HBQueueItemWorkingView.m in Sources */ = {isa = PBXBuildFile; fileRef = A9B3B63822E2EA58001CEB9A /* HBQueueItemWorkingView.m */; };
 		A9B5568522FFE4870050D582 /* HBRedirect.m in Sources */ = {isa = PBXBuildFile; fileRef = A954010222FF397000F83A5F /* HBRedirect.m */; };
 		A9B6B9EE217B38D200B957AE /* HBLocalizationUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = A9B6B9ED217B38D200B957AE /* HBLocalizationUtilities.h */; };
@@ -746,6 +753,22 @@
 		A91CE2D31C7DABE40068F46F /* libiconv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.tbd; path = usr/lib/libiconv.tbd; sourceTree = SDKROOT; };
 		A91D54851E378ABD006D0997 /* HBSecurityAccessToken.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HBSecurityAccessToken.h; sourceTree = "<group>"; };
 		A91D54861E378ABD006D0997 /* HBSecurityAccessToken.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HBSecurityAccessToken.m; sourceTree = "<group>"; };
+		A91D84E326676647008987A0 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = "it.lproj/HandBrakeXPCService1-InfoPlist.strings"; sourceTree = "<group>"; };
+		A91D84E626676647008987A0 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = "it.lproj/HandBrakeXPCService2-InfoPlist.strings"; sourceTree = "<group>"; };
+		A91D84E926676647008987A0 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = "it.lproj/HandBrakeXPCService3-InfoPlist.strings"; sourceTree = "<group>"; };
+		A91D84EC26676647008987A0 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = "it.lproj/HandBrakeXPCService4-InfoPlist.strings"; sourceTree = "<group>"; };
+		A91D8503266766FF008987A0 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = "de.lproj/HandBrakeXPCService1-InfoPlist.strings"; sourceTree = "<group>"; };
+		A91D8504266766FF008987A0 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = "de.lproj/HandBrakeXPCService2-InfoPlist.strings"; sourceTree = "<group>"; };
+		A91D8505266766FF008987A0 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = "de.lproj/HandBrakeXPCService3-InfoPlist.strings"; sourceTree = "<group>"; };
+		A91D8506266766FF008987A0 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = "de.lproj/HandBrakeXPCService4-InfoPlist.strings"; sourceTree = "<group>"; };
+		A91D850A26676733008987A0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = "fr.lproj/HandBrakeXPCService1-InfoPlist.strings"; sourceTree = "<group>"; };
+		A91D850B26676733008987A0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = "fr.lproj/HandBrakeXPCService2-InfoPlist.strings"; sourceTree = "<group>"; };
+		A91D850C26676733008987A0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = "fr.lproj/HandBrakeXPCService3-InfoPlist.strings"; sourceTree = "<group>"; };
+		A91D850D26676733008987A0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = "fr.lproj/HandBrakeXPCService4-InfoPlist.strings"; sourceTree = "<group>"; };
+		A91D851126676752008987A0 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/HandBrakeXPCService1-InfoPlist.strings"; sourceTree = "<group>"; };
+		A91D851226676752008987A0 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/HandBrakeXPCService2-InfoPlist.strings"; sourceTree = "<group>"; };
+		A91D851326676752008987A0 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/HandBrakeXPCService3-InfoPlist.strings"; sourceTree = "<group>"; };
+		A91D851426676752008987A0 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/HandBrakeXPCService4-InfoPlist.strings"; sourceTree = "<group>"; };
 		A91F97331D7B2A4E00D82DCE /* HBAudioTransformers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HBAudioTransformers.h; sourceTree = "<group>"; };
 		A91F97341D7B2A4E00D82DCE /* HBAudioTransformers.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HBAudioTransformers.m; sourceTree = "<group>"; };
 		A92268761A6E555500A8D5C5 /* HBAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HBAppDelegate.h; sourceTree = "<group>"; };
@@ -899,6 +922,8 @@
 		A990C55222FF4EBA00E07CE2 /* HandBrakeXPCService.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HandBrakeXPCService.entitlements; sourceTree = "<group>"; };
 		A990D9051A64562200139032 /* HBJob+HBJobConversion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "HBJob+HBJobConversion.h"; sourceTree = "<group>"; };
 		A990D9061A64562200139032 /* HBJob+HBJobConversion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "HBJob+HBJobConversion.m"; sourceTree = "<group>"; };
+		A9935852256C346F00A6875E /* libzimg.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libzimg.a; path = external/contrib/lib/libzimg.a; sourceTree = "<group>"; };
+		A9935867256C349B00A6875E /* libzimg.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libzimg.a; path = external/contrib/lib/libzimg.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		A99422DE1B1887B000DDB077 /* NSJSONSerialization+HBAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSJSONSerialization+HBAdditions.h"; sourceTree = "<group>"; };
 		A99422DF1B1887B000DDB077 /* NSJSONSerialization+HBAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSJSONSerialization+HBAdditions.m"; sourceTree = "<group>"; };
 		A997D8EB1A4ABB0900E19B6F /* HBPresetCoding.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HBPresetCoding.h; sourceTree = "<group>"; };
@@ -944,6 +969,7 @@
 		A9AB9AA721181CC700BB3C7E /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		A9ABD1A51E2A0F0700EC8B65 /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = System/Library/Frameworks/CoreText.framework; sourceTree = SDKROOT; };
 		A9ABD1A81E2A0F8200EC8B65 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		A9B304882671288D001FFEDE /* HBDirectUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HBDirectUtilities.h; sourceTree = "<group>"; };
 		A9B34D74197696FE00871B7D /* DiskArbitration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DiskArbitration.framework; path = System/Library/Frameworks/DiskArbitration.framework; sourceTree = SDKROOT; };
 		A9B3B63722E2EA58001CEB9A /* HBQueueItemWorkingView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HBQueueItemWorkingView.h; sourceTree = "<group>"; };
 		A9B3B63822E2EA58001CEB9A /* HBQueueItemWorkingView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HBQueueItemWorkingView.m; sourceTree = "<group>"; };
@@ -1156,6 +1182,7 @@
 				27D6C77314B102DA00B785E4 /* libxml2.a in Frameworks */,
 				A955128B1A320B02001BFC6F /* libjansson.a in Frameworks */,
 				1C6D76551CD7733300F5B943 /* libharfbuzz.a in Frameworks */,
+				A9935865256C346F00A6875E /* libzimg.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1246,6 +1273,7 @@
 				A91CE2C81C7DABBC0068F46F /* libx264.a in Frameworks */,
 				A91CE2C91C7DABBC0068F46F /* libx265.a in Frameworks */,
 				A91CE2CA1C7DABBC0068F46F /* libxml2.a in Frameworks */,
+				A9935866256C347800A6875E /* libzimg.a in Frameworks */,
 				A91CE2B11C7DAA530068F46F /* libhandbrake.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1293,6 +1321,7 @@
 				A95512881A320A12001BFC6F /* libjansson.a */,
 				A9E165511C523016003EF30E /* libavfilter.a */,
 				1C15C82B1CD7722500368223 /* libharfbuzz.a */,
+				A9935867256C349B00A6875E /* libzimg.a */,
 			);
 			name = "Static Libraries";
 			sourceTree = "<group>";
@@ -1350,6 +1379,7 @@
 		273F203414ADBAC30021BE6D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				A9935852256C346F00A6875E /* libzimg.a */,
 				A9442CDD24DABFED005EDF62 /* Sparkle.xcodeproj */,
 				A9A25D9B21182741005A8A0F /* CoreMedia.framework */,
 				A9AB9AA721181CC700BB3C7E /* CoreVideo.framework */,
@@ -1563,6 +1593,7 @@
 				A98F38041C7DCA7E00E469C8 /* HBStateFormatter+Private.h */,
 				A91D54851E378ABD006D0997 /* HBSecurityAccessToken.h */,
 				A91D54861E378ABD006D0997 /* HBSecurityAccessToken.m */,
+				A9B304882671288D001FFEDE /* HBDirectUtilities.h */,
 			);
 			name = Others;
 			sourceTree = "<group>";
@@ -1713,9 +1744,13 @@
 				A964D39922FDE8EE00DFCAEA /* HandBrakeXPCService.m */,
 				A964D39B22FDE8EE00DFCAEA /* main.m */,
 				A9E8F80423003B2F00AA14E9 /* HandBrakeXPCService1.plist */,
+				A91D84E226676647008987A0 /* HandBrakeXPCService1-InfoPlist.strings */,
 				A9884FA4243E544800B61738 /* HandBrakeXPCService2.plist */,
+				A91D84E526676647008987A0 /* HandBrakeXPCService2-InfoPlist.strings */,
 				A9884FA6243E544E00B61738 /* HandBrakeXPCService3.plist */,
+				A91D84E826676647008987A0 /* HandBrakeXPCService3-InfoPlist.strings */,
 				A9884FA8243E545400B61738 /* HandBrakeXPCService4.plist */,
+				A91D84EB26676647008987A0 /* HandBrakeXPCService4-InfoPlist.strings */,
 				A919992A23003CFC0037F526 /* Localizable.strings */,
 			);
 			path = HandBrakeXPCService;
@@ -1956,6 +1991,7 @@
 				A91CE2FD1C7DB99D0068F46F /* HBMutablePreset.h in Headers */,
 				A91F97351D7B2A4E00D82DCE /* HBAudioTransformers.h in Headers */,
 				A98B8E241C7DD2A200B810C9 /* HBPresetCoding.h in Headers */,
+				A9B304892671288D001FFEDE /* HBDirectUtilities.h in Headers */,
 				A9294CC91DC4BBF7004D3415 /* HBJob+Private.h in Headers */,
 				A91D54871E378ABD006D0997 /* HBSecurityAccessToken.h in Headers */,
 				A91CE2FE1C7DB99D0068F46F /* HBTreeNode.h in Headers */,
@@ -2143,7 +2179,7 @@
 			isa = PBXProject;
 			attributes = {
 				CLASSPREFIX = HB;
-				LastUpgradeCheck = 1230;
+				LastUpgradeCheck = 1250;
 				ORGANIZATIONNAME = HandBrake;
 				TargetAttributes = {
 					273F203814ADBC200021BE6D = {
@@ -2408,6 +2444,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A951D9CA243E5B50002579F2 /* Localizable.strings in Resources */,
+				A91D84E726676647008987A0 /* HandBrakeXPCService2-InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2415,6 +2452,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A91D84EA26676647008987A0 /* HandBrakeXPCService3-InfoPlist.strings in Resources */,
 				A93341CF243E158B003A82C2 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2424,6 +2462,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A93341E0243E158E003A82C2 /* Localizable.strings in Resources */,
+				A91D84ED26676647008987A0 /* HandBrakeXPCService4-InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2431,6 +2470,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A91D84E426676647008987A0 /* HandBrakeXPCService1-InfoPlist.strings in Resources */,
 				A919992823003CFC0037F526 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2807,6 +2847,50 @@
 				D0DA2ABC24B384AD003ACA30 /* pt-BR */,
 			);
 			name = AddPreset.xib;
+			sourceTree = "<group>";
+		};
+		A91D84E226676647008987A0 /* HandBrakeXPCService1-InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A91D84E326676647008987A0 /* it */,
+				A91D8503266766FF008987A0 /* de */,
+				A91D850A26676733008987A0 /* fr */,
+				A91D851126676752008987A0 /* pt-BR */,
+			);
+			name = "HandBrakeXPCService1-InfoPlist.strings";
+			sourceTree = "<group>";
+		};
+		A91D84E526676647008987A0 /* HandBrakeXPCService2-InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A91D84E626676647008987A0 /* it */,
+				A91D8504266766FF008987A0 /* de */,
+				A91D850B26676733008987A0 /* fr */,
+				A91D851226676752008987A0 /* pt-BR */,
+			);
+			name = "HandBrakeXPCService2-InfoPlist.strings";
+			sourceTree = "<group>";
+		};
+		A91D84E826676647008987A0 /* HandBrakeXPCService3-InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A91D84E926676647008987A0 /* it */,
+				A91D8505266766FF008987A0 /* de */,
+				A91D850C26676733008987A0 /* fr */,
+				A91D851326676752008987A0 /* pt-BR */,
+			);
+			name = "HandBrakeXPCService3-InfoPlist.strings";
+			sourceTree = "<group>";
+		};
+		A91D84EB26676647008987A0 /* HandBrakeXPCService4-InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A91D84EC26676647008987A0 /* it */,
+				A91D8506266766FF008987A0 /* de */,
+				A91D850D26676733008987A0 /* fr */,
+				A91D851426676752008987A0 /* pt-BR */,
+			);
+			name = "HandBrakeXPCService4-InfoPlist.strings";
 			sourceTree = "<group>";
 		};
 		A94DC2DC20CADA2C00EAC8FD /* MainWindow.xib */ = {
@@ -3191,15 +3275,18 @@
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_COMPLETION_HANDLER_MISUSE = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_FRAMEWORK_INCLUDE_PRIVATE_FROM_PUBLIC = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
 				CLANG_WARN_OBJC_IMPLICIT_ATOMIC_PROPERTIES = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_INTERFACE_IVARS = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
@@ -3276,15 +3363,18 @@
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_COMPLETION_HANDLER_MISUSE = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_FRAMEWORK_INCLUDE_PRIVATE_FROM_PUBLIC = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
 				CLANG_WARN_OBJC_IMPLICIT_ATOMIC_PROPERTIES = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_INTERFACE_IVARS = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
@@ -4741,15 +4831,18 @@
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_COMPLETION_HANDLER_MISUSE = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_FRAMEWORK_INCLUDE_PRIVATE_FROM_PUBLIC = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
 				CLANG_WARN_OBJC_IMPLICIT_ATOMIC_PROPERTIES = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_INTERFACE_IVARS = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
@@ -5015,15 +5108,18 @@
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_COMPLETION_HANDLER_MISUSE = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_FRAMEWORK_INCLUDE_PRIVATE_FROM_PUBLIC = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
 				CLANG_WARN_OBJC_IMPLICIT_ATOMIC_PROPERTIES = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_INTERFACE_IVARS = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;

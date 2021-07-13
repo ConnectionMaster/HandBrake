@@ -13,7 +13,7 @@ namespace HandBrakeWPF.Services.Presets.Interfaces
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
 
-    using HandBrake.Interop.Model;
+    using HandBrake.Interop.Interop.Interfaces.Model;
 
     using HandBrakeWPF.Services.Presets.Model;
 
@@ -50,7 +50,7 @@ namespace HandBrakeWPF.Services.Presets.Interfaces
         void Save();
 
         /// <summary>
-        /// Save the state of the Preset Treview
+        /// Save the state of the Preset Treeview
         /// </summary>
         void SaveCategoryStates();
 

@@ -147,7 +147,7 @@ char * hb_utf8_to_cp(const char *src)
     return dst;
 }
 
-int hb_dvd_region(char *device, int *region_mask)
+int hb_dvd_region(const char *device, int *region_mask)
 {
 #if defined( DVD_LU_SEND_RPC_STATE ) && defined( DVD_AUTH )
     struct stat  st;
@@ -647,7 +647,7 @@ char * hb_get_temporary_directory()
     else
         base = strdup("/tmp");
 #endif
-    /* I prefer to remove evntual last '/' (for cygwin) */
+    /* I prefer to remove eventual last '/' (for cygwin) */
     if( base[strlen(base)-1] == '/' )
         base[strlen(base)-1] = '\0';
 
@@ -658,7 +658,7 @@ char * hb_get_temporary_directory()
 }
 
 /************************************************************************
- * Get a tempory filename for HB
+ * Get a temporary filename for HB
  ***********************************************************************/
 char * hb_get_temporary_filename( char *fmt, ... )
 {
